@@ -1,0 +1,41 @@
+{
+  "universe": {"id":"airline-universe","name":"Airline Customer Experience Universe","description":"Complex sample for hierarchy, causal relationships, decisions, formulas, values, and layout testing."},
+  "structures": [
+    {"id":"customer","name":"Customer Experience","description":"Passenger journey and experience outcomes."},
+    {"id":"operations","name":"Operations","description":"Operational delivery and disruption handling."},
+    {"id":"people","name":"People","description":"Employee capability and service readiness."},
+    {"id":"financial","name":"Financial","description":"Cost and revenue impact."}
+  ],
+  "nodes": [
+    {"id":"journey","structureId":"customer","parentId":null,"name":"Passenger Journey","type":"category","value":"","status":"active","x":100,"y":80,"fields":[]},
+    {"id":"checkin","structureId":"customer","parentId":"journey","name":"Check-in","type":"process","value":"94","status":"active","x":80,"y":220,"fields":[{"id":"f1","name":"Unit","type":"text","value":"Service score"}]},
+    {"id":"boarding","structureId":"customer","parentId":"journey","name":"Boarding","type":"process","value":"88","status":"warning","x":310,"y":220,"fields":[]},
+    {"id":"metrics","structureId":"customer","parentId":null,"name":"Customer Metrics","type":"category","value":"","status":"active","x":570,"y":80,"fields":[]},
+    {"id":"csi","structureId":"customer","parentId":"metrics","name":"CSI","type":"metric","value":"84","status":"warning","x":540,"y":220,"fields":[]},
+    {"id":"nps","structureId":"customer","parentId":"metrics","name":"NPS","type":"metric","value":"72","status":"active","x":770,"y":220,"fields":[]},
+    {"id":"health","structureId":"customer","parentId":"metrics","name":"Customer Health Score","type":"metric","value":"78","status":"active","x":650,"y":370,"fields":[]},
+    {"id":"ops","structureId":"operations","parentId":null,"name":"Operations Control","type":"category","value":"","status":"active","x":80,"y":560,"fields":[]},
+    {"id":"otp","structureId":"operations","parentId":"ops","name":"On-time Performance","type":"percentage","value":"88.18","status":"warning","x":80,"y":700,"fields":[]},
+    {"id":"bag","structureId":"operations","parentId":"ops","name":"Baggage Handling","type":"process","value":"96.5","status":"active","x":310,"y":700,"fields":[]},
+    {"id":"found","structureId":"operations","parentId":"bag","name":"Baggage Found?","type":"decision","value":"","status":"active","x":540,"y":700,"fields":[]},
+    {"id":"deliver","structureId":"operations","parentId":"found","name":"Deliver to Passenger","type":"process","value":"45","status":"active","x":500,"y":850,"fields":[]},
+    {"id":"trace","structureId":"operations","parentId":"found","name":"Continue Tracing","type":"process","value":"12","status":"warning","x":740,"y":850,"fields":[]},
+    {"id":"people-root","structureId":"people","parentId":null,"name":"People Capability","type":"category","value":"","status":"active","x":1050,"y":80,"fields":[]},
+    {"id":"training","structureId":"people","parentId":"people-root","name":"Frontliner Training","type":"process","value":"92","status":"active","x":1050,"y":220,"fields":[]},
+    {"id":"finance-root","structureId":"financial","parentId":null,"name":"Financial Performance","type":"category","value":"","status":"active","x":1050,"y":560,"fields":[]},
+    {"id":"cost","structureId":"financial","parentId":"finance-root","name":"Compensation Cost","type":"currency","value":"275000000","status":"warning","x":1050,"y":700,"fields":[]}
+  ],
+  "relationships": [
+    {"id":"r1","sourceId":"otp","targetId":"csi","type":"influences","weight":1},
+    {"id":"r2","sourceId":"bag","targetId":"nps","type":"influences","weight":1},
+    {"id":"r3","sourceId":"training","targetId":"csi","type":"supports","weight":1},
+    {"id":"r4","sourceId":"nps","targetId":"cost","type":"influences","weight":1},
+    {"id":"r5","sourceId":"found","targetId":"deliver","type":"yes","weight":1},
+    {"id":"r6","sourceId":"found","targetId":"trace","type":"no","weight":1}
+  ],
+  "formulas": [
+    {"id":"health-formula","name":"Customer Health Score","nodeId":"health","targetNodeId":"health","expression":"AVERAGE(CSI,NPS)","inputs":["csi","nps"],"outputType":"number","unit":"score","status":"valid"}
+  ],
+  "savedViews": [],
+  "layout": {"preset":"manual","direction":"tb","scope":"universe"}
+}
