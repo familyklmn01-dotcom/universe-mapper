@@ -1,4 +1,4 @@
-# Universe Mapper — Final v1.7
+# Universe Mapper — Stage 1 Final Stabilization
 
 Visual knowledge and system-modeling application with hierarchy, relationships, formulas, scenarios, reports, private Firebase workspaces, and collaboration.
 
@@ -48,3 +48,14 @@ The deployable output is generated in `dist/`. Netlify uses `netlify.toml` autom
 - Revoke an invitation and confirm access is removed.
 
 The single-file `Universe_Mapper_Final_v1_7_Preview.html` is provided only for offline acceptance testing. Deploy the Vite project, not that preview file, for production.
+
+## Stage 1 stabilization additions
+
+- Firestore autosave runs only after an actual edit and waits 1.2 seconds after the last change.
+- Firestore acknowledgements and remote snapshots do not clear local Undo/Redo history.
+- Owned, shared, and invited Universe queries load independently, so one denied query cannot erase successful results.
+- Undo/Redo are available directly in the workspace toolbar.
+- Selected shapes can be resized with the lower-right handle.
+- Drag a connector from the top, right, bottom, or left handle and drop it on another shape.
+- Circle is available from **Insert → Circle** and the node type selector.
+- Open `Business_Performance_Mind_Map_Simulation_Sample.json` for a concrete mind map with three formulas and two scenarios.

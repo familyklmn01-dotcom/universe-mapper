@@ -1,0 +1,46 @@
+{
+  "universe": {
+    "id": "universe-business-performance",
+    "name": "Business Performance Mind Map",
+    "description": "Concrete mind-map example with formulas and two simulation scenarios. Open Formula and Simulation from the toolbar after loading this JSON."
+  },
+  "structures": [
+    { "id": "strategy", "name": "Business Strategy", "description": "Performance drivers and calculated outcomes" }
+  ],
+  "nodes": [
+    { "id": "performance", "structureId": "strategy", "parentId": null, "name": "Business Performance", "type": "circle", "value": "", "status": "active", "x": 680, "y": 380, "width": 150, "height": 150 },
+    { "id": "revenue", "structureId": "strategy", "parentId": "performance", "name": "Revenue", "type": "category", "value": "", "status": "active", "x": 320, "y": 180 },
+    { "id": "customer", "structureId": "strategy", "parentId": "performance", "name": "Customer", "type": "category", "value": "", "status": "active", "x": 1040, "y": 180 },
+    { "id": "operations", "structureId": "strategy", "parentId": "performance", "name": "Operations", "type": "category", "value": "", "status": "active", "x": 320, "y": 650 },
+    { "id": "people", "structureId": "strategy", "parentId": "performance", "name": "People", "type": "category", "value": "", "status": "active", "x": 1040, "y": 650 },
+    { "id": "sales-volume", "structureId": "strategy", "parentId": "revenue", "name": "Sales Volume", "type": "number", "value": 1200, "status": "active", "x": 70, "y": 80 },
+    { "id": "average-price", "structureId": "strategy", "parentId": "revenue", "name": "Average Price", "type": "currency", "value": 75, "status": "active", "x": 70, "y": 200 },
+    { "id": "gross-revenue", "structureId": "strategy", "parentId": "revenue", "name": "Gross Revenue", "type": "currency", "value": 90000, "status": "active", "x": 70, "y": 320 },
+    { "id": "satisfaction", "structureId": "strategy", "parentId": "customer", "name": "Customer Satisfaction", "type": "percentage", "value": 84, "status": "active", "x": 1300, "y": 80 },
+    { "id": "retention", "structureId": "strategy", "parentId": "customer", "name": "Retention Rate", "type": "percentage", "value": 78, "status": "active", "x": 1300, "y": 200 },
+    { "id": "customer-strength", "structureId": "strategy", "parentId": "customer", "name": "Customer Strength", "type": "percentage", "value": 81, "status": "active", "x": 1300, "y": 320 },
+    { "id": "operating-cost", "structureId": "strategy", "parentId": "operations", "name": "Operating Cost", "type": "currency", "value": 65000, "status": "active", "x": 70, "y": 600 },
+    { "id": "operating-profit", "structureId": "strategy", "parentId": "operations", "name": "Operating Profit", "type": "currency", "value": 25000, "status": "active", "x": 70, "y": 720 },
+    { "id": "productivity", "structureId": "strategy", "parentId": "people", "name": "Employee Productivity", "type": "percentage", "value": 88, "status": "active", "x": 1300, "y": 650 }
+  ],
+  "relationships": [
+    { "id": "r1", "sourceId": "customer-strength", "targetId": "sales-volume", "type": "increases", "weight": 1 },
+    { "id": "r2", "sourceId": "productivity", "targetId": "operating-cost", "type": "decreases", "weight": 1 }
+  ],
+  "formulas": [
+    { "id": "f1", "name": "Gross Revenue", "nodeId": "gross-revenue", "targetNodeId": "gross-revenue", "expression": "Sales_Volume*Average_Price", "inputs": ["sales-volume", "average-price"], "outputType": "currency", "unit": "USD", "status": "valid" },
+    { "id": "f2", "name": "Operating Profit", "nodeId": "operating-profit", "targetNodeId": "operating-profit", "expression": "Gross_Revenue-Operating_Cost", "inputs": ["gross-revenue", "operating-cost"], "outputType": "currency", "unit": "USD", "status": "valid" },
+    { "id": "f3", "name": "Customer Strength", "nodeId": "customer-strength", "targetNodeId": "customer-strength", "expression": "AVERAGE(Customer_Satisfaction,Retention_Rate)", "inputs": ["satisfaction", "retention"], "outputType": "percentage", "unit": "%", "status": "valid" }
+  ],
+  "scenarios": [
+    { "id": "scenario-growth", "name": "Growth Plan", "overrides": { "sales-volume": 1450, "average-price": 78, "operating-cost": 72000, "satisfaction": 87, "retention": 82, "productivity": 91 }, "createdAt": "2026-09-14T00:00:00.000Z" },
+    { "id": "scenario-pressure", "name": "Cost Pressure", "overrides": { "sales-volume": 1100, "average-price": 73, "operating-cost": 80000, "satisfaction": 80, "retention": 74, "productivity": 82 }, "createdAt": "2026-09-14T00:00:00.000Z" }
+  ],
+  "savedViews": [],
+  "layout": {
+    "preset": "mindmap",
+    "direction": "tb",
+    "scope": "universe",
+    "manualPositions": {}
+  }
+}
