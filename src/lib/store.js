@@ -16,7 +16,7 @@ export function normalizeData(input) {
     id:String(n.id||createId('node')),structureId:String(n.structureId||n.structure_id||structures[0].id),
     parentId:n.parentId??n.parent_id??contains.find(r=>(r.targetId||r.target)===n.id)?.sourceId??contains.find(r=>(r.targetId||r.target)===n.id)?.source??null,
     name:String(n.name||`Untitled ${i+1}`),type:String(n.type||'category'),value:n.value??'',status:String(n.status||'draft'),
-    x:Number.isFinite(Number(n.x))?Number(n.x):120+(i%4)*250,y:Number.isFinite(Number(n.y))?Number(n.y):100+Math.floor(i/4)*130,locked:Boolean(n.locked),
+    x:Number.isFinite(Number(n.x))?Number(n.x):120+(i%4)*250,y:Number.isFinite(Number(n.y))?Number(n.y):100+Math.floor(i/4)*130,width:Math.max(72,Number(n.width)|| (n.type==='circle'?104:184)),height:Math.max(48,Number(n.height)|| (n.type==='circle'?104:64)),locked:Boolean(n.locked),
     fields:Array.isArray(n.fields)?n.fields.map((f,j)=>({id:String(f.id||createId('field')),name:String(f.name||f.k||`Field ${j+1}`),type:String(f.type||f.t||'text'),value:f.value??f.v??''})):[]
   }))
   const ids=new Set(nodes.map(n=>n.id)); const structureIds=new Set(structures.map(s=>s.id))
