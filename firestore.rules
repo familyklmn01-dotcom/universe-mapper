@@ -54,6 +54,16 @@ service cloud.firestore {
           signedIn() && resource.data.email == request.auth.token.email
         );
       }
+
+      match /presentations/{presentationId} {
+        allow read: if owner(universe(universeId)) || member(universe(universeId));
+        allow create, update, delete: if owner(universe(universeId)) || editor(universe(universeId));
+
+        match /scenes/{sceneId} {
+          allow read: if owner(universe(universeId)) || member(universe(universeId));
+          allow create, update, delete: if owner(universe(universeId)) || editor(universe(universeId));
+        }
+      }
     }
   }
 }
