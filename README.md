@@ -1,5 +1,7 @@
 # Universe Mapper — Stage 1 Final Stabilization
 
+**Map the logic. Shape the story. Present the universe.**
+
 Visual knowledge and system-modeling application with hierarchy, relationships, formulas, scenarios, reports, private Firebase workspaces, and collaboration.
 
 ## Local development
