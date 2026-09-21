@@ -14,9 +14,9 @@ export function pathThrough(points){
   return points.reduce((path,point,index)=>index?`${path} L${point.x},${point.y}`:`M${point.x},${point.y}`,'')
 }
 
-export function viewportForBounds(bounds,width,height,scale=.88){
+export function viewportForBounds(bounds,width,height,scale=.88,maxZoom=1.8){
   if(!bounds)return null
   if(width&&typeof width==='object'){scale=Number(height)>2?.9:Number(height)||.88;height=width.height;width=width.width}
-  const zoom=clamp(Math.min(width/bounds.width,height/bounds.height)*scale,.2,1.8)
+  const zoom=clamp(Math.min(width/bounds.width,height/bounds.height)*scale,.2,maxZoom)
   return{zoom,pan:{x:width/2-(bounds.x+bounds.width/2)*zoom,y:height/2-(bounds.y+bounds.height/2)*zoom}}
 }
