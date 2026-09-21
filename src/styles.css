@@ -119,3 +119,38 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .context-menu{width:205px}.context-menu-label{padding:6px 9px 7px;color:#71809a;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
 
 @media(max-width:1100px),(pointer:coarse){.canvas-palette.object-navigator{overflow:visible}.canvas-palette .palette-flyout{position:fixed;left:64px;top:auto;bottom:78px;max-height:min(460px,calc(100vh - 130px))}}
+
+/* v9 interaction + navigation refinement */
+.workspace-toolbar{overflow:visible;position:relative;z-index:12}
+.workspace-toolbar .saved-view-control,.workspace-toolbar .layout-control{position:relative;z-index:20}
+.saved-view-popover,.layout-popover{z-index:200;max-height:min(520px,calc(100vh - 100px));overflow:auto}
+.saved-view-popover{min-width:250px}
+.layout-popover{min-width:280px}
+.inspector-overlay-collapsed{width:18px;min-width:18px;max-width:18px;background:transparent;border-left:0;box-shadow:none;pointer-events:none}
+.inspector-overlay-collapsed .panel-rail{width:18px;height:72px;margin-top:14px;border:1px solid var(--border);border-right:0;border-radius:10px 0 0 10px;background:var(--panel);box-shadow:-5px 10px 22px #0004;pointer-events:auto}
+.inspector-overlay-collapsed .panel-rail button{width:18px;height:34px;border:0;background:transparent;color:var(--text)}
+.inspector-overlay-collapsed .panel-rail span{display:none}
+.canvas-palette.object-navigator{top:auto;left:auto;width:54px;max-height:none;height:auto;overflow:visible;padding:6px;touch-action:none}
+.canvas-palette .palette-drag-handle{height:18px!important;min-height:18px!important;width:40px!important;cursor:grab!important;color:#7f8da5!important;font-size:14px!important;border:0!important;background:transparent!important}
+.canvas-palette .palette-drag-handle:active{cursor:grabbing!important}
+.canvas-palette .palette-section-label{display:block;padding:5px 6px 2px;color:#7f8da5;font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.canvas-palette .palette-flyout{max-height:min(560px,calc(100vh - 110px));overflow:auto}
+.canvas-palette .palette-file-action,.canvas-palette .palette-flyout button{cursor:pointer}
+.canvas-palette input[type="color"],.inspector input[type="color"]{cursor:pointer}
+.canvas-palette .palette-button,.canvas-palette .palette-button span{cursor:pointer}
+.canvas.mode-create-button{cursor:crosshair}
+.canvas.mode-create-button svg{cursor:crosshair}
+.graph-node.link-active,.canvas-annotation.link-active{cursor:pointer}
+.annotation-button-object .annotation-hit-area{cursor:pointer}
+.annotation-button-object.selected rect:not(.annotation-resize){filter:drop-shadow(0 5px 12px #5574dc55)}
+.link-type-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:10px}
+.link-type-tabs button{height:32px;border:1px solid #33415b;border-radius:7px;background:#121b2b;color:#9eabc1;font-size:10px;font-weight:700}
+.link-type-tabs button:hover,.link-type-tabs button.active{border-color:#6d89e5;background:#253657;color:#fff}
+.inspector-section label input[type="color"]{width:100%;height:38px;padding:3px}
+@media(max-width:1100px),(pointer:coarse){
+  .workspace-toolbar{overflow:visible}
+  .canvas-palette.object-navigator{bottom:auto;right:auto;width:54px;max-height:none;height:auto;flex-direction:column;overflow:visible;touch-action:none}
+  .canvas-palette.object-navigator .palette-flyout{position:absolute;left:calc(100% + 9px);top:0;bottom:auto;max-height:min(520px,calc(100vh - 100px));overflow:auto}
+  .canvas-palette.object-navigator .palette-group{flex:0 0 auto}
+  .canvas-palette.object-navigator .palette-drag-handle{display:grid!important}
+}
