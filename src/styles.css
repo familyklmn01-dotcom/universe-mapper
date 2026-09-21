@@ -47,3 +47,75 @@
 .canvas-annotation.selected .annotation-hit-area{stroke:#7897f5;stroke-width:1;stroke-dasharray:5 4}
 .canvas-annotation .annotation-hit-area{cursor:move}
 @media(max-width:900px){.inspector-overlay{max-width:calc(100vw - 70px);min-width:280px}.app-shell{min-width:0}.brand-copy{min-width:120px}}
+
+/* v8 interaction polish */
+.workspace-toolbar{gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#3c4c6b transparent;white-space:nowrap}
+.workspace-toolbar>*{flex:0 0 auto}
+.view-tabs button,.interaction-mode button,.saved-view-control>button,.layout-control>.auto-layout-button,.layer-toggles button,.appearance-tools button,.canvas-tools button,.canvas-tools span{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:11px;font-weight:600}
+.view-tabs{gap:4px}.view-tabs button{height:32px;min-width:72px;padding:0 11px}
+.quick-history{margin-left:2px}.interaction-mode{margin-left:2px}.interaction-mode button{height:32px;min-width:54px;padding:0 10px}
+.saved-view-control>button,.layout-control>.auto-layout-button{height:32px!important;min-width:92px!important;padding:0 11px!important;font-size:11px!important;font-weight:600!important}
+.layout-control>.auto-layout-button{min-width:118px!important}
+.layer-toggles{gap:4px}.layer-toggles button{height:32px;min-width:58px;padding:0 9px;font-size:10px}
+.appearance-tools{gap:4px;margin-left:0;margin-right:0}.appearance-tools button{width:32px;height:32px;font-size:11px}
+.canvas-tools{height:32px;flex:0 0 auto;margin-left:2px}.canvas-tools button{width:32px;height:30px}.canvas-tools span{width:46px;font-size:10px}
+.canvas-tools button:hover{background:#202d47;color:#fff}.canvas-tools button[title="Zoom all"]{min-width:34px}
+
+/* Object Navigator: categories stay compact; clicking a category opens its flyout. */
+.canvas-palette.object-navigator{overflow:visible;max-height:none;height:auto}
+.canvas-palette .palette-group{position:relative;flex:0 0 auto}
+.canvas-palette .palette-flyout{display:none;position:absolute;z-index:100;left:calc(100% + 9px);top:0;width:238px;max-height:min(520px,calc(100vh - 150px));overflow:auto;padding:10px;border:1px solid #3d4d69;border-radius:12px;background:#101827f7;box-shadow:0 18px 48px #000a;backdrop-filter:blur(10px)}
+.canvas-palette .palette-group.active>.palette-flyout{display:flex;flex-direction:column;gap:4px}
+.canvas-palette .palette-flyout strong{display:block;padding:2px 5px 0;color:#f0f4fc;font-size:12px;font-weight:700}
+.canvas-palette .palette-flyout .palette-hint{display:block;padding:0 5px 7px;color:#7f8da5;font-size:9px;line-height:1.4}
+.canvas-palette .palette-flyout button,.canvas-palette .palette-file-action{width:100%;min-height:32px;display:flex;align-items:center;padding:7px 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:#d8e0ef;font-size:10px;text-align:left;cursor:pointer}
+.canvas-palette .palette-flyout button:hover,.canvas-palette .palette-file-action:hover{background:#202c43;border-color:#34486d;color:#fff}
+.canvas-palette .palette-flyout .palette-divider{height:1px;margin:4px 2px;background:#2c3a54}
+.canvas-palette .palette-flyout .palette-node-link{color:#aebbe0}
+.canvas-palette .palette-file-action{position:relative;overflow:hidden}
+.canvas-palette .palette-file-action input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.canvas-palette .palette-button{position:relative;flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;border:1px solid transparent;border-radius:7px;background:transparent;color:#cbd6e9;cursor:pointer}
+.canvas-palette .palette-button:hover{border-color:#5d78cc;background:#263658;color:#fff}
+.canvas-palette .palette-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.canvas-palette .palette-group.active>.palette-button,.canvas-palette .palette-group.active>button{border-color:#5d78cc;background:#263658;color:#fff}
+
+/* Placement modes use a clear crosshair/plus cursor; Select returns to a normal pointer. */
+.canvas.mode-select{cursor:default}
+.canvas.mode-pan{cursor:grab}.canvas.mode-pan:active{cursor:grabbing}
+.canvas[class*="mode-create-"]{cursor:crosshair}
+.canvas[class*="mode-create-"] svg{cursor:crosshair}
+.canvas.mode-zoom-window{cursor:crosshair}
+
+/* Modern Inspector: fields never shrink into clipped controls. */
+.inspector-overlay{min-width:320px;max-width:min(460px,calc(100vw - 320px));}
+.inspector{padding:18px 18px 28px}
+.inspector-title h2{font-size:19px;letter-spacing:-.01em}
+.inspector-section{padding:15px 0}.inspector-section h3{font-size:10px;letter-spacing:.08em;color:#93a1b8}
+.annotation-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;width:100%}
+.annotation-grid>label,.field-stack{min-width:0}
+.field-stack input,.field-stack select,.field-stack textarea,.annotation-grid input,.annotation-grid select,.annotation-grid textarea,.readonly-field{box-sizing:border-box;min-width:0;max-width:100%;width:100%;height:38px;padding:0 10px;border:1px solid #34435e;border-radius:9px;background:#0b1220;color:#edf2ff;outline:none;font-size:11px;font-weight:500}
+.field-stack textarea,.annotation-grid textarea{height:auto;min-height:92px;padding:9px 10px;line-height:1.45;resize:vertical}
+.annotation-grid label{display:flex;flex-direction:column;gap:6px;color:#8795ab;font-size:9px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.annotation-grid input[type="color"]{height:38px;padding:4px;cursor:pointer}
+.annotation-grid input[type="number"]{appearance:textfield}
+.field-stack input:focus,.field-stack select:focus,.field-stack textarea:focus,.annotation-grid input:focus,.annotation-grid select:focus,.annotation-grid textarea:focus{border-color:#7089e3;box-shadow:0 0 0 3px #607feb19}
+.readonly-field{display:flex;align-items:center;color:#bfc9da;background:#151e30}
+.inspector-measure-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px;padding:11px 12px;border:1px solid #293750;border-radius:10px;background:#141e30}
+.inspector-measure-head>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}.inspector-measure-head span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#72809a}.inspector-measure-head strong{font-size:12px;color:#e7edf8}
+.unit-switch{display:flex;gap:3px;padding:3px;border:1px solid #34445f;border-radius:8px;background:#0c1321}.unit-switch button{height:27px;min-width:34px;border:0;border-radius:5px;background:transparent;color:#8190a8;font-size:10px;font-weight:700;cursor:pointer}.unit-switch button.active{background:#2a3b60;color:#fff}
+.action-grid .button{min-width:0;height:36px;font-size:10px}
+.check-field{min-width:0}.check-field input{cursor:pointer}
+
+/* Free Text automatically follows canvas light/dark appearance. */
+.canvas-annotation.annotation-text-object .annotation-hit-area{cursor:move}
+.theme-light .canvas-annotation.annotation-text-object .annotation-selection-outline{fill:#fff;stroke:#5f7fe5}
+.theme-light .inline-annotation-text{background:#fff!important;color:#172033!important;border-color:#6684df!important}
+.theme-dark .inline-annotation-text{background:#111929!important;color:#edf2ff!important}
+
+/* Color controls and other interactive swatches communicate clickability. */
+input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
+
+/* Layer context menu follows actual stack state. */
+.context-menu{width:205px}.context-menu-label{padding:6px 9px 7px;color:#71809a;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+
+@media(max-width:1100px),(pointer:coarse){.canvas-palette.object-navigator{overflow:visible}.canvas-palette .palette-flyout{position:fixed;left:64px;top:auto;bottom:78px;max-height:min(460px,calc(100vh - 130px))}}
