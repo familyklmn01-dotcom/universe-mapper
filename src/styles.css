@@ -126,10 +126,10 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .saved-view-popover,.layout-popover{z-index:200;max-height:min(520px,calc(100vh - 100px));overflow:auto}
 .saved-view-popover{min-width:250px}
 .layout-popover{min-width:280px}
-.inspector-overlay-collapsed{width:18px;min-width:18px;max-width:18px;background:transparent;border-left:0;box-shadow:none;pointer-events:none}
-.inspector-overlay-collapsed .panel-rail{width:18px;height:72px;margin-top:14px;border:1px solid var(--border);border-right:0;border-radius:10px 0 0 10px;background:var(--panel);box-shadow:-5px 10px 22px #0004;pointer-events:auto}
-.inspector-overlay-collapsed .panel-rail button{width:18px;height:34px;border:0;background:transparent;color:var(--text)}
-.inspector-overlay-collapsed .panel-rail span{display:none}
+.inspector-overlay-collapsed{width:44px;min-width:44px;max-width:44px;background:transparent;border-left:0;box-shadow:none;pointer-events:none}
+.inspector-overlay-collapsed .panel-rail{width:44px;height:100%;margin-top:0;border:0 solid var(--border);border-left:1px solid var(--border);border-right:0;border-radius:0;background:var(--panel);box-shadow:none;pointer-events:auto}
+.inspector-overlay-collapsed .panel-rail button{width:28px;height:28px;border:0;background:transparent;color:var(--text)}
+.inspector-overlay-collapsed .panel-rail span{display:block}
 .canvas-palette.object-navigator{top:auto;left:auto;width:54px;max-height:none;height:auto;overflow:visible;padding:6px;touch-action:none}
 .canvas-palette .palette-drag-handle{height:18px!important;min-height:18px!important;width:40px!important;cursor:grab!important;color:#7f8da5!important;font-size:14px!important;border:0!important;background:transparent!important}
 .canvas-palette .palette-drag-handle:active{cursor:grabbing!important}
