@@ -170,3 +170,6 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .canvas.mode-select .graph-node,.canvas.mode-select .canvas-annotation{cursor:pointer}
 .canvas.mode-select .graph-node.selected,.canvas.mode-select .canvas-annotation.selected{cursor:grab}
 .canvas.mode-select .graph-node.selected:active,.canvas.mode-select .canvas-annotation.selected:active{cursor:grabbing}
+
+.context-menu-group-label{padding:7px 9px 4px;color:#6f7d96;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-top:1px solid #26334b;margin-top:4px}
+.context-menu-group-label:first-child{border-top:0;margin-top:0}
