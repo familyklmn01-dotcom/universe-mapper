@@ -175,7 +175,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
   }
   const newUniverse=()=>setDialog({type:'universe',create:true})
   const selectOne=id=>{setSelectedId(id);setSelectedIds(id?[id]:[]);const target=id?{type:'node',id}:null;setSelectedObject(target);setPropertyTarget(target)}
-  const handleSelectObject=target=>{setSelectedObject(target);setPropertyTarget(target||null);if(target)setRightCollapsed(false)}
+  const handleSelectObject=target=>{if(!target)return;setSelectedObject(target);setPropertyTarget(target);setRightCollapsed(false)}
   const handleOpenProperties=target=>{setSelectedObject(target);setPropertyTarget(target||null);if(target)setRightCollapsed(false)}
   const openUniverse=async event=>{const file=event.target.files?.[0];if(!file)return;try{const parsed=file.name.toLowerCase().endsWith('.mf')?await readMapperFile(file):normalizeData(JSON.parse(await file.text()));setData(parsed);dataRef.current=parsed;selectOne(parsed.nodes[0]?.id||null);setHistory([]);setFuture([]);setStructureFilter('all');setNotice({type:'success',text:`${file.name} berhasil dibuka.`})}catch(error){setNotice({type:'error',text:`File tidak valid: ${error.message}`})}finally{event.target.value=''}}
   const saveUniverse=async()=>saveBlobAs(`${safeName(data.universe.name)}.mf`,await createMapperFile(data))
