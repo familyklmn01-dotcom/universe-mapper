@@ -34,10 +34,7 @@
 
 /* v7 interaction stabilization: Inspector is a true overlay and never reflows the canvas. */
 .app-shell{position:relative}
-.inspector-overlay{position:absolute;z-index:28;top:64px;right:0;bottom:0;display:block;min-width:280px;max-width:min(480px,calc(100vw - 320px));background:var(--panel);border-left:1px solid var(--border);box-shadow:-18px 0 42px rgba(0,0,0,.18)}
-.inspector-overlay>.inspector{width:100%;height:100%;max-height:none}
-.inspector-overlay-collapsed{width:44px;min-width:44px;max-width:44px;box-shadow:none}
-.inspector-overlay-collapsed .panel-rail{height:100%;width:44px;border-left:1px solid var(--border)}
+
 .inspector-resize-handle{position:absolute;z-index:2;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize}
 .inspector-resize-handle::after{content:"";position:absolute;left:3px;top:0;bottom:0;width:1px;background:var(--border)}
 .inspector-resize-handle:hover::after{width:2px;background:var(--accent)}
@@ -126,10 +123,6 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .saved-view-popover,.layout-popover{z-index:200;max-height:min(520px,calc(100vh - 100px));overflow:auto}
 .saved-view-popover{min-width:250px}
 .layout-popover{min-width:280px}
-.inspector-overlay-collapsed{width:44px;min-width:44px;max-width:44px;background:transparent;border-left:0;box-shadow:none;pointer-events:none}
-.inspector-overlay-collapsed .panel-rail{width:44px;height:100%;margin-top:0;border:0 solid var(--border);border-left:1px solid var(--border);border-right:0;border-radius:0;background:var(--panel);box-shadow:none;pointer-events:auto}
-.inspector-overlay-collapsed .panel-rail button{width:28px;height:28px;border:0;background:transparent;color:var(--text)}
-.inspector-overlay-collapsed .panel-rail span{display:block}
 .canvas-palette.object-navigator{top:auto;left:auto;width:54px;max-height:none;height:auto;overflow:visible;padding:6px;touch-action:none}
 .canvas-palette .palette-drag-handle{height:18px!important;min-height:18px!important;width:40px!important;cursor:grab!important;color:#7f8da5!important;font-size:14px!important;border:0!important;background:transparent!important}
 .canvas-palette .palette-drag-handle:active{cursor:grabbing!important}
@@ -167,9 +160,6 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .link-type-tabs button:focus-visible,.inspector-tabs button:focus-visible,.format-row button:focus-visible{outline:2px solid #7897f5;outline-offset:2px}
 .link-active{cursor:pointer}
 .graph-node.link-active,.canvas-annotation.link-active{cursor:pointer}
-.canvas.mode-select .graph-node,.canvas.mode-select .canvas-annotation{cursor:pointer}
-.canvas.mode-select .graph-node.selected,.canvas.mode-select .canvas-annotation.selected{cursor:grab}
-.canvas.mode-select .graph-node.selected:active,.canvas.mode-select .canvas-annotation.selected:active{cursor:grabbing}
 
 .context-menu-group-label{padding:7px 9px 4px;color:#6f7d96;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-top:1px solid #26334b;margin-top:4px}
 .context-menu-group-label:first-child{border-top:0;margin-top:0}
@@ -215,8 +205,6 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 /* Relationship geometry: wide invisible hit target, visual line remains thin. */
 .edge-group{cursor:pointer}
 .edge-hit{stroke-width:16!important}
-.edge-group.active .edge{stroke-width:2.8!important}
-.edge-group:hover .edge{stroke-width:3!important}
 .route-waypoint{cursor:move!important}
 
 /* Selected objects communicate grab only while the pointer is actually held. */
@@ -224,10 +212,6 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .canvas.mode-select .graph-node.selected,.canvas.mode-select .canvas-annotation.selected{cursor:grab!important}
 .canvas.mode-select .graph-node.selected:active,.canvas.mode-select .canvas-annotation.selected:active{cursor:grabbing!important}
 
-/* Inspector remains an overlay sidebar; collapse is the same compact rail pattern as Navigation. */
-.inspector-overlay{position:absolute!important;top:64px!important;right:0!important;bottom:0!important;z-index:28!important;display:block!important;background:var(--panel)!important}
-.inspector-overlay>.inspector{height:100%!important;max-height:none!important}
-.inspector-overlay-collapsed{width:44px!important;min-width:44px!important;max-width:44px!important}
 .layer-control-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .layer-control-grid button{min-width:0;min-height:34px;padding:0 8px;border:1px solid #34435e;border-radius:8px;background:#121b2b;color:#c7d1e2;font:600 10px Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer}
 .layer-control-grid button:hover:not(:disabled){background:#263b67;border-color:#6d89e5;color:#fff}
@@ -235,8 +219,8 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 .workspace-toolbar{position:relative;z-index:60!important;overflow:visible!important}
 .workspace-toolbar .saved-view-popover,.workspace-toolbar .layout-popover{z-index:500!important}
 
-/* Focused post-V14 refinements: inspector stays pinned, contextual palettes remain compact. */
-.inspector-overlay{top:64px!important;right:0!important;bottom:0!important;z-index:90!important;position:absolute!important;align-self:start!important}
+/* Inspector is a fixed overlay layer above canvas/tools and never collapses when empty. */
+.inspector-overlay{position:absolute!important;top:64px!important;right:0!important;bottom:0!important;z-index:120!important;display:block!important;background:var(--panel)!important;align-self:start!important}
 .inspector-overlay>.inspector{position:relative!important;top:0!important;height:100%!important;max-height:none!important}
 .edge-group{isolation:isolate}
 .edge{vector-effect:non-scaling-stroke}
