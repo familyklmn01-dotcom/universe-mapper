@@ -173,9 +173,3 @@ input[type="color"],.color-swatch,.fill-swatch,.stroke-swatch{cursor:pointer}
 
 .context-menu-group-label{padding:7px 9px 4px;color:#6f7d96;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-top:1px solid #26334b;margin-top:4px}
 .context-menu-group-label:first-child{border-top:0;margin-top:0}
-
-/* Cumulative fix: marquee selection surface and relationship interaction only. */
-.selection-surface{fill:transparent;stroke:none;pointer-events:all}
-.selection-box{pointer-events:none}
-.edge-interaction-layer{pointer-events:none}
-.edge-interaction-layer .edge-hit{pointer-events:stroke;cursor:pointer}
