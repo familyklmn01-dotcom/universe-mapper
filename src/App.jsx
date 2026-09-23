@@ -583,7 +583,7 @@ function Inspector({ data, selected, selectedObject, selectedCount, onEdit, onCh
   const [unit,setUnit]=useState('px')
   const [textTab,setTextTab]=useState('style')
   const fitTextBox=(item,textOverride=item.text)=>{if(!item||item.autoFit===false)return;const text=String(textOverride||'');const font=Math.max(8,Number(item.fontSize)||16);const weight=item.fontWeight==='700'?1.04:1;const lines=text.split('\n');const longest=Math.max(1,...lines.map(line=>Array.from(line).length));const width=Math.min(720,Math.max(48,longest*font*.62*weight+24));const height=Math.min(420,Math.max(32,lines.length*font*1.45+20));item.width=width;item.height=height}
-  const patch=(key,value)=>{if(!annotation)return;commit(next=>{const item=(next.annotations||[]).find(record=>record.id===annotation.id);if(item){item[key]=value;if(['text','fontSize','fontFamily','fontWeight','italic','underline'].includes(key))fitTextBox(item,key==='text'?value:item.text)}}return next})}
+  const patch=(key,value)=>{if(!annotation)return;commit(next=>{const item=(next.annotations||[]).find(record=>record.id===annotation.id);if(item){item[key]=value;if(['text','fontSize','fontFamily','fontWeight','italic','underline'].includes(key))fitTextBox(item,key==='text'?value:item.text)}return next})}
   const patchMeasure=(key,value)=>patch(key,Math.max(0,fromUnit(value,unit)))
   const displayMeasure=value=>Number(toUnit(value,unit).toFixed(unit==='cm'?2:0))
   useEffect(()=>{
