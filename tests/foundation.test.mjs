@@ -8,8 +8,8 @@ const project={
   universe:{id:'u1',name:'Test'},
   structures:[{id:'s1',name:'Main'}],
   nodes:[{id:'a',structureId:'s1',name:'A',x:10,y:20},{id:'b',structureId:'s1',parentId:'a',name:'B',x:220,y:20}],
-  relationships:[{id:'r1',sourceId:'a',targetId:'b',type:'influences',manualRoute:true,waypoints:[{x:140,y:80}]}],
-  annotations:[{id:'frame-1',kind:'frame',x:0,y:0,width:500,height:300}],
+  relationships:[{id:'r1',sourceId:'a',targetId:'b',type:'influences',manualRoute:true,waypoints:[{x:140,y:80}],color:'#123456',strokeStyle:'dashed'}],
+  annotations:[{id:'frame-1',kind:'frame',x:0,y:0,width:500,height:300,strokeWidth:0},{id:'button-1',kind:'button',x:30,y:40,width:120,height:44,link:{type:'url',url:'https://example.com'}}],
   savedViews:[{id:'v1',name:'Overview',viewport:{panX:2,panY:3,zoom:.8}}]
 }
 
@@ -17,6 +17,10 @@ test('normalizer preserves canonical routing, frames, and views',()=>{
   const data=normalizeData(project)
   assert.equal(data.relationships[0].waypoints[0].x,140)
   assert.equal(data.annotations[0].kind,'frame')
+  assert.equal(data.annotations[0].strokeWidth,0)
+  assert.equal(data.annotations[1].kind,'button')
+  assert.equal(data.annotations[1].link.url,'https://example.com')
+  assert.equal(data.relationships[0].strokeStyle,'dashed')
   assert.equal(data.savedViews[0].name,'Overview')
 })
 
