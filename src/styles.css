@@ -192,3 +192,65 @@
 }
 .inspector button:not(.collapse-button):not(.color-palette-trigger):hover{background:#1d2a42!important;border-color:#5a70a2!important}
 .inspector button.active:not(.collapse-button):not(.color-palette-trigger){background:#263b67!important;border-color:#7897f5!important;color:#fff!important}
+
+/* Printout v2: hierarchy/document only. Never render the graph canvas in Printout. */
+.workspace-toolbar.is-printout-toolbar>.interaction-mode,
+.workspace-toolbar.is-printout-toolbar>.saved-view-control,
+.workspace-toolbar.is-printout-toolbar>.layout-control,
+.workspace-toolbar.is-printout-toolbar>.layer-toggles,
+.workspace-toolbar.is-printout-toolbar>.appearance-tools,
+.workspace-toolbar.is-printout-toolbar>.canvas-tools{display:none!important}
+.workspace-toolbar.is-printout-toolbar{gap:8px}
+.printout-toolbar{display:flex;align-items:center;gap:7px;flex:1;min-width:0;margin-left:10px}
+.printout-toolbar .printout-view-tabs{flex:0 0 auto}
+.printout-select{display:flex;align-items:center;gap:6px;height:32px;padding:0 7px;border:1px solid #394967;border-radius:8px;background:#111a2c;color:#aebbd0}
+.printout-select span{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.printout-select select{height:27px;min-width:120px;border:0;outline:0;background:#111a2c;color:#eef3ff;font-size:10px;font-weight:700}
+.printout-select.paper select{min-width:66px}
+.printout-copy-actions{display:flex;align-items:center;gap:3px;margin-left:auto}
+.printout-copy-actions button,.printout-document-actions button{height:30px;padding:0 9px;border:1px solid #394967;border-radius:7px;background:#18243a;color:#cbd6e8;font-size:9px;font-weight:800}
+.printout-copy-actions button:hover,.printout-document-actions button:hover{background:#263b67;color:#fff;border-color:#6684df}
+.printout-toolbar .print-action{height:30px;padding:0 11px;border:1px solid #6684df;border-radius:7px;background:#263b67;color:#fff;font-size:9px;font-weight:800}
+.printout-view{min-width:0;min-height:0;height:100%;overflow:hidden;padding:0;background:#eef1f5;color:#172033}
+.printout-document-toolbar{height:54px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 18px;border-bottom:1px solid #cbd3df;background:#f7f8fa}
+.printout-document-toolbar>div:first-child{display:flex;align-items:center;gap:10px;min-width:0}
+.printout-document-toolbar span{font-size:9px;font-weight:800;letter-spacing:.14em;color:#52647e}
+.printout-document-toolbar strong{font-size:12px;color:#172033;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.printout-document-actions{display:flex;align-items:center;gap:5px}
+.printout-document-actions .print-action{background:#263b67;color:#fff;border-color:#526fc0}
+.printout-scroll{height:calc(100% - 54px);overflow:auto;padding:24px;background:#dfe4eb;overscroll-behavior:contain}
+.printout-scaled{width:max-content;min-width:100%;transform-origin:top left}
+.printout-main-structure,.printout-printout,.printout-split{min-height:100%}
+.printout-paper-hierarchy{width:min(1120px,calc(100vw - 180px));min-height:790px;margin:0 auto;padding:42px 48px;background:#fff;border:1px solid #cbd3df;box-shadow:0 12px 36px #17203322;border-radius:2px}
+.printout-document{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.printout-document .printout-page{width:100%;min-height:790px}
+.printout-split-hierarchy{display:grid;grid-template-columns:minmax(620px,1fr) minmax(520px,44%);gap:24px;align-items:start;max-width:1600px;margin:0 auto}
+.printout-split-hierarchy .printout-paper-hierarchy{width:100%;margin:0}
+.printout-document-split{min-width:0}
+.printout-structure{margin:0;padding:20px 22px;border:1px solid #d4dae4;border-radius:10px;background:#fff;box-shadow:0 8px 24px #27364b12}
+.printout-paper-hierarchy>.printout-structure{border:0;box-shadow:none;padding:0}
+.printout-structure>header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;border-bottom:1px solid #d5dce6;padding-bottom:14px;margin-bottom:12px}
+.printout-structure-tools{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.printout-structure-tools small{color:#7a879b;font-size:9px;white-space:nowrap}
+.printout-structure-tools button{height:28px;padding:0 8px;border:1px solid #c6cfdd;border-radius:6px;background:#fff;color:#344054;font-size:9px;font-weight:800}
+.printout-structure-tools button:hover{background:#edf2ff;border-color:#91a7e9}
+.printout-row{cursor:grab}
+.printout-row:active{cursor:grabbing}
+.printout-row.is-dragging{opacity:.45}
+.printout-node.drop-target>.printout-row{background:#e8efff;border-color:#6f8de3;box-shadow:0 0 0 2px #6f8de322}
+.printout-node.drop-target>.printout-row::after{content:'Drop to choose this node as parent';margin-left:auto;color:#536fae;font-size:9px;font-weight:700;align-self:center}
+.printout-content input,.printout-description-inline{cursor:text}
+.printout-branch{font-family:"Segoe UI Symbol",ui-monospace,monospace;font-weight:700}
+.printout-reparent-backdrop{z-index:200}
+@media(max-width:1250px){.printout-toolbar{gap:4px}.printout-select select{min-width:90px}.printout-split-hierarchy{grid-template-columns:1fr}.printout-paper-hierarchy{width:min(1120px,calc(100vw - 80px))}}
+@media print{
+  .workspace-toolbar.is-printout-toolbar,.printout-document-toolbar,.printout-copy-actions,.printout-structure-tools,.printout-actions{display:none!important}
+  .printout-view{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
+  .printout-scroll{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
+  .printout-scaled{width:auto!important;min-width:0!important;zoom:1!important}
+  .printout-paper-hierarchy,.printout-document,.printout-document .printout-page{width:100%!important;min-height:0!important;margin:0!important;padding:8mm!important;box-shadow:none!important;border:0!important}
+  .printout-split-hierarchy{display:block!important}
+  .printout-split-hierarchy>.printout-paper-hierarchy{break-after:page;page-break-after:always}
+  .printout-structure{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:0!important}
+  .printout-reparent-backdrop{display:none!important}
+}
