@@ -287,8 +287,8 @@
 .printout-split-live>.printout-view .printout-map-paper{width:100%;max-width:none;margin:0;box-sizing:border-box}
 
 /* Interaction refinement: View dropdown + accessible toolbar flow */
-.view-control{position:relative;flex:0 0 auto}.view-popover{position:absolute;z-index:160;top:calc(100% + 6px);left:0;min-width:150px;padding:6px;border:1px solid #3c4b68;border-radius:9px;background:#111929;box-shadow:0 18px 45px #0009}.view-popover button{display:block;width:100%;min-height:32px;border:0;border-radius:6px;background:transparent;color:#dce5f5;text-align:left;padding:7px 10px;font-size:10px;font-weight:700}.view-popover button:hover,.view-popover button.active{background:#202c43;color:#fff}
-.workspace-toolbar{overflow-x:auto;overflow-y:visible;scrollbar-width:thin}.workspace-toolbar::-webkit-scrollbar{height:3px}.workspace-toolbar::-webkit-scrollbar-thumb{background:#33415e;border-radius:9px}
+.view-control{position:relative;flex:0 0 auto;z-index:130}.view-popover{position:absolute;z-index:160;top:calc(100% + 6px);left:0;min-width:150px;padding:6px;border:1px solid #3c4b68;border-radius:9px;background:#111929;box-shadow:0 18px 45px #0009}.view-popover button{display:block;width:100%;min-height:32px;border:0;border-radius:6px;background:transparent;color:#dce5f5;text-align:left;padding:7px 10px;font-size:10px;font-weight:700}.view-popover button:hover,.view-popover button.active{background:#202c43;color:#fff}
+.workspace-toolbar{overflow:visible;scrollbar-width:thin;position:relative;z-index:120}.workspace-toolbar::-webkit-scrollbar{height:3px}.workspace-toolbar::-webkit-scrollbar-thumb{background:#33415e;border-radius:9px}
 .printout-toolbar{margin-left:8px;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;justify-content:flex-start}.printout-toolbar::-webkit-scrollbar{height:3px}.printout-toolbar::-webkit-scrollbar-thumb{background:#405170;border-radius:9px}.printout-copy-actions{margin-left:0;flex:0 0 auto}.printout-toolbar .print-action{flex:0 0 auto}
 
 /* Printout hierarchy: formula to the right, description below. */
@@ -301,3 +301,6 @@
 .workspace-toolbar.is-printout-toolbar{padding-right:10px}.workspace-toolbar.is-printout-toolbar .printout-toolbar{min-width:max-content}
 .printout-document-toolbar{justify-content:flex-start!important}.printout-document-actions{margin-left:12px;flex:0 0 auto}
 .mention-results{display:flex;flex-direction:column;gap:4px;margin-top:6px;padding:6px;border:1px solid #34435e;border-radius:8px;background:#0d1320;max-height:180px;overflow:auto}.mention-results button{min-height:30px;border:1px solid transparent;border-radius:6px;background:transparent;color:#dce5f5;text-align:left;padding:6px 8px;font-size:10px}.mention-results button:hover,.mention-results button.active{background:#1d2a42;border-color:#526a9d}
+
+/* Toolbar dropdown stability: keep View/Camera/Layout popovers above the toolbar and prevent clipping. */
+.workspace-toolbar > .transient-menu{position:relative;z-index:131}.workspace-toolbar .view-popover,.workspace-toolbar .saved-view-popover,.workspace-toolbar .layout-popover{z-index:500;max-height:min(70vh,520px);overflow:auto}
