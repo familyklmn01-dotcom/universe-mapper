@@ -78,3 +78,117 @@
   .printout-name-row{grid-template-columns:minmax(180px,1fr) minmax(180px,1.1fr)}
   .printout-content input,.printout-content .printout-description-inline{border:0!important;background:transparent!important;color:#111!important}
 }
+
+/* P01-P10 interaction/UI stabilization: Inspector controls */
+.inspector input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.inspector textarea,
+.inspector select{
+  width:100%; min-width:0; min-height:36px; box-sizing:border-box;
+  border:1px solid #34435e; border-radius:8px; background:#0d1320; color:#edf2ff;
+  padding:0 10px; outline:0; box-shadow:none; font-size:11px;
+}
+.inspector textarea{padding:9px 10px; min-height:88px; resize:vertical; line-height:1.45}
+.inspector input:focus,.inspector textarea:focus,.inspector select:focus{border-color:#718ce3;box-shadow:0 0 0 2px #718ce326;background:#111a2b}
+.inspector input[type="color"]{width:100%;height:36px;padding:3px;border:1px solid #34435e;border-radius:8px;background:#0d1320}
+.inspector label,.inspector .field-stack>span{color:#9aa8bf;font-size:9px;font-weight:700;letter-spacing:.04em}
+.inspector .annotation-grid{gap:10px}
+.inspector .format-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.inspector .format-row button,.inspector .inspector-tabs button,.inspector .unit-switch button{
+  min-width:34px;height:32px;padding:0 10px;border:1px solid #34435e;border-radius:7px;background:#151f32;color:#dce5f5;font-size:10px;font-weight:700
+}
+.inspector .format-row button:hover,.inspector .inspector-tabs button:hover,.inspector .unit-switch button:hover{background:#1d2a42;border-color:#5a70a2}
+.inspector .format-row button.active,.inspector .inspector-tabs button.active,.inspector .unit-switch button.active{background:#263b67;border-color:#7897f5;color:#fff}
+.relationship-inspector .inspector-section{border-top:1px solid #293750;padding-top:15px;margin-top:15px}
+.relationship-inspector .relationship-actions{margin-top:4px}
+.relationship-inspector .route-state{background:#111a2b;border-color:#34435e}
+.relationship-inspector .muted{color:#8291aa;font-size:9px;line-height:1.45}
+.relationship-inspector .color-palette-field{margin:0}
+
+/* Printout is a workspace mode: show only the tools that belong to print composition. */
+.printout-layout-switch{display:flex!important;align-items:center;gap:7px;margin-left:auto}
+.printout-view-tabs{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid #394967;border-radius:8px;background:#111a2c}
+.printout-view-tabs button{height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#9eabc0;font-size:9px;font-weight:700;cursor:pointer}
+.printout-view-tabs button:hover{background:#1b2941;color:#eef3ff}
+.printout-view-tabs button.active{background:#263b67;color:#fff}
+.main-structure-create{margin-left:4px!important;color:#eaf0ff!important}
+
+/* Main Structure map on a real paper sheet. */
+.printout-map-mode{overflow:auto!important;padding:24px!important;background:#dfe4eb!important;display:block!important}
+.printout-paper-stage{width:100%;min-height:100%;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:8px}
+.printout-paper{position:relative;flex:0 0 auto;width:min(1100px,calc(100vw - 150px));aspect-ratio:var(--paper-ratio);background:#fff;box-shadow:0 12px 36px #17203322;border:1px solid #cbd3df;overflow:hidden}
+.printout-paper>.canvas{width:100%!important;height:100%!important;min-height:0!important}
+.printout-paper>.canvas .canvas-palette{z-index:30}
+.printout-split-map{min-width:0;overflow:auto;background:#dfe4eb;padding:18px}
+.printout-split-map .printout-paper{width:min(900px,calc(100vw - 520px))}
+.printout-workspace.is-split{grid-template-columns:minmax(0,1fr) minmax(420px,44%);height:100%;overflow:hidden}
+.printout-workspace.is-split>.printout-split-map{min-width:0;min-height:0;overflow:auto}
+.printout-workspace.is-split>.printout-view{min-width:0;min-height:0;overflow:auto}
+
+/* Explicit tree connectors; do not rely on the font to render ├─ / └─. */
+.printout-children{margin-left:28px;padding-left:20px;border-left:0;position:relative}
+.printout-node:not(.is-root){position:relative}
+.printout-node:not(.is-root)::before{content:"";position:absolute;left:-20px;top:19px;width:20px;border-top:1px solid #9aa7bb}
+.printout-node:not(.is-root)::after{content:"";position:absolute;left:-20px;top:0;bottom:0;border-left:1px solid #c3ccd9}
+.printout-node:not(.is-root).is-last::after{bottom:auto;height:19px}
+.printout-branch{position:relative;width:0;min-width:0;font-size:0;padding:0;margin:0}
+.printout-branch::after{display:none}
+
+/* Printout-specific cursor semantics: creation tools are crosshair/+; Pan stays hand. */
+.canvas[class*="mode-create-"]{cursor:crosshair!important}
+.canvas.mode-connect{cursor:crosshair!important}
+.canvas.mode-pan{cursor:grab!important}
+.canvas.mode-pan:active{cursor:grabbing!important}
+.canvas.mode-select{cursor:default}
+
+/* Browser print must print the selected Printout workspace, not the application shell. */
+@media print{
+  html,body,#root{width:100%!important;height:auto!important;overflow:visible!important;background:#fff!important}
+  .app-shell{display:block!important;width:100%!important;min-width:0!important;height:auto!important;overflow:visible!important}
+  .app-shell>.topbar,.app-shell>.body-grid>.sidebar,.app-shell>.body-grid>.left-divider,.app-shell>.inspector-overlay,.app-shell>.body-grid>.panel-rail{display:none!important}
+  .body-grid{display:block!important;min-height:0!important}
+  .workspace{display:block!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important}
+  .workspace-toolbar,.canvas-palette,.canvas-floating,.mini-map,.appearance-tools,.layer-toggles,.canvas-tools,.saved-view-control,.layout-control,.quick-history,.interaction-mode,.main-structure-create,.printout-layout-switch,.printout-header-actions,.printout-structure-tools,.printout-actions{display:none!important}
+  .printout-workspace{display:block!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;background:#fff!important}
+  .app-shell.printout-map .printout-map-mode{display:block!important;background:#fff!important;padding:0!important;overflow:visible!important}
+  .app-shell.printout-map .printout-document-mode{display:none!important}
+  .app-shell.printout-printout .printout-map-mode{display:none!important}
+  .app-shell.printout-printout .printout-document-mode{display:block!important}
+  .app-shell.printout-split .printout-workspace{display:block!important}
+  .app-shell.printout-split .printout-split-map{display:block!important;break-after:page;page-break-after:always}
+  .app-shell.printout-split .printout-view{display:block!important}
+  .printout-paper-stage{display:block!important;padding:0!important;overflow:visible!important}
+  .printout-paper{width:100%!important;aspect-ratio:var(--paper-ratio)!important;margin:0!important;border:0!important;box-shadow:none!important;overflow:hidden!important}
+  .printout-paper>.canvas{height:100%!important;min-height:0!important}
+  .printout-view{display:block!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;background:#fff!important}
+  .printout-header{display:flex!important;max-width:none!important;margin:0 0 8mm!important;padding:0 0 4mm!important;border-bottom:1px solid #222!important;background:#fff!important;box-shadow:none!important}
+  .printout-document{display:block!important;max-width:none!important;margin:0!important}
+  .printout-page{width:100%!important;min-height:0!important;margin:0!important;padding:8mm!important;border:0!important;border-radius:0!important;box-shadow:none!important;break-after:page;page-break-after:always;background:#fff!important}
+  .printout-page:last-child{break-after:auto!important;page-break-after:auto!important}
+}
+.printout-document-mode .printout-view{zoom:var(--printout-zoom,1);transform-origin:top left}
+.app-shell.printout-map .layout-control,
+.app-shell.printout-map .layer-toggles,
+.app-shell.printout-map .appearance-tools,
+.app-shell.printout-map .workspace-toolbar>.canvas-tools,
+.app-shell.printout-map .workspace-toolbar>.interaction-mode{display:none!important}
+.app-shell.printout-printout .layout-control,
+.app-shell.printout-printout .layer-toggles,
+.app-shell.printout-printout .appearance-tools,
+.app-shell.printout-printout .workspace-toolbar>.canvas-tools,
+.app-shell.printout-printout .workspace-toolbar>.interaction-mode{display:none!important}
+.app-shell.printout-split .layout-control,
+.app-shell.printout-split .layer-toggles,
+.app-shell.printout-split .appearance-tools,
+.app-shell.printout-split .workspace-toolbar>.canvas-tools,
+.app-shell.printout-split .workspace-toolbar>.interaction-mode{display:none!important}
+.printout-zoom-controls{display:flex;align-items:center;gap:2px;height:32px;padding:2px;border:1px solid #394967;border-radius:8px;background:#111a2c}
+.printout-zoom-controls button{height:26px;min-width:28px;padding:0 7px;border:0;border-radius:5px;background:transparent;color:#dce5f5;font-size:10px;font-weight:700}
+.printout-zoom-controls button:hover{background:#263b67;color:#fff}
+.printout-zoom-controls span{min-width:42px;text-align:center;color:#9eabc0;font-size:9px;font-weight:700}
+@media print{.printout-document-mode .printout-view{zoom:1!important}}
+.inspector button:not(.collapse-button):not(.color-palette-trigger){
+  border:1px solid #34435e!important;border-radius:8px!important;background:#151f32!important;color:#dce5f5!important;
+  font-size:10px!important;font-weight:700!important;box-shadow:none!important;
+}
+.inspector button:not(.collapse-button):not(.color-palette-trigger):hover{background:#1d2a42!important;border-color:#5a70a2!important}
+.inspector button.active:not(.collapse-button):not(.color-palette-trigger){background:#263b67!important;border-color:#7897f5!important;color:#fff!important}
