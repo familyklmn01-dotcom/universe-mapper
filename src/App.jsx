@@ -616,7 +616,16 @@ function InspectorLayerControls({data,target,commit}){
 
 function Inspector({ data, selected, selectedObject, selectedCount, onCollapse, onEdit, onChild, onFormula, onDelete, onToggleLock, commit }) {
   const annotation=selectedObject?.type==='annotation'?(data.annotations||[]).find(item=>item.id===selectedObject.id):null
-  const relationship=selectedObject?.type==='relationship' ? (data.relationships.find(item=>item.id===selectedObject.id) || (selectedObject.id?.startsWith('contains-') ? (()=>{const targetId=selectedObject.id.slice('contains-'.length);const child=data.nodes.find(n=>n.id===targetId);const parent=child?.parentId?data.nodes.find(n=>n.id===child.parentId):null;return child&&parent?{id:selectedObject.id,sourceId:parent.id,targetId:child.id,type:'contains',weight:1,strokeStyle:'solid',strokeWidth:1.7,startArrow:'none',endArrow:'none',manualRoute:false,waypoints:[],synthetic:true}:null})() : null) : null
+  let relationship=null
+  if(selectedObject?.type==='relationship'){
+    relationship=data.relationships.find(item=>item.id===selectedObject.id)||null
+    if(!relationship && selectedObject.id?.startsWith('contains-')){
+      const targetId=selectedObject.id.slice('contains-'.length)
+      const child=data.nodes.find(n=>n.id===targetId)
+      const parent=child?.parentId?data.nodes.find(n=>n.id===child.parentId):null
+      if(child&&parent) relationship={id:selectedObject.id,sourceId:parent.id,targetId:child.id,type:'contains',weight:1,strokeStyle:'solid',strokeWidth:1.7,startArrow:'none',endArrow:'none',manualRoute:false,waypoints:[],synthetic:true}
+    }
+  }
   const patchRelationship=(key,value)=>{if(!relationship||relationship.synthetic)return;commit(next=>{const item=next.relationships.find(r=>r.id===relationship.id);if(item)item[key]=value;return next})}
   const [unit,setUnit]=useState('px')
   const [textTab,setTextTab]=useState('style')
