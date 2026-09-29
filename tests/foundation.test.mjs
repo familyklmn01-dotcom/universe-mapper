@@ -50,3 +50,19 @@ test('printout mother filter includes only selected mothers and descendants',()=
   assert.equal(tree.length,1)
   assert.equal(tree[0].children[0].name,'B')
 })
+
+test('interaction contract keeps relationship appearance unchanged on selection', async () => {
+  const source = await import('node:fs/promises').then(fs => fs.readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'))
+  const styles = await import('node:fs/promises').then(fs => fs.readFile(new URL('../src/styles.css', import.meta.url), 'utf8'))
+  const edgeBlock = source.slice(source.indexOf('const renderEdge='), source.indexOf('// Relationships are canvas infrastructure'))
+  assert.match(edgeBlock, /onSelectObject\?\.\(\{type:'relationship',id:edge\.id\}\)/)
+  assert.match(edgeBlock, /onOpenProperties\?\.\(\{type:'relationship',id:edge\.id\}\)/)
+  assert.doesNotMatch(edgeBlock, /setEdgeEditor\(edge\).*onSelectObject/)
+  assert.doesNotMatch(styles, /\.edge-group\.active \.edge\{/)
+})
+
+test('root scope is passed explicitly into GraphCanvas', async () => {
+  const source = await import('node:fs/promises').then(fs => fs.readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'))
+  assert.match(source, /<GraphCanvas rootScopeId=\{rootScopeId\}/)
+  assert.match(source, /function GraphCanvas\(\{ rootScopeId, palettePos/)
+})
