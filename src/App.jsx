@@ -187,7 +187,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
 
   const columns=`${leftCollapsed?44:leftWidth}px ${leftCollapsed?0:6}px minmax(0,1fr)`
 
-  return <div className={`app-shell ${readOnly?'read-only':''} printout-${printoutLayout}`}>
+  return <div className={`app-shell ${readOnly?'read-only':''}`}>
     <header className="topbar">
       <button className="brand-mark" onClick={()=>setDialog({type:'universe'})} title="Universe Mapper"><UniverseLogo className="brand-logo"/></button><button className="brand-copy brand-button" onClick={()=>setDialog({type:'universe'})}><strong>Universe Mapper</strong><span>{data.universe.name}</span></button>
       <nav className="menu-bar">
