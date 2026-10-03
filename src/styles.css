@@ -186,13 +186,6 @@
 .printout-zoom-controls button:hover{background:#263b67;color:#fff}
 .printout-zoom-controls span{min-width:42px;text-align:center;color:#9eabc0;font-size:9px;font-weight:700}
 @media print{.printout-document-mode .printout-view{zoom:1!important}}
-.inspector button:not(.collapse-button):not(.color-palette-trigger){
-  border:1px solid #34435e!important;border-radius:8px!important;background:#151f32!important;color:#dce5f5!important;
-  font-size:10px!important;font-weight:700!important;box-shadow:none!important;
-}
-.inspector button:not(.collapse-button):not(.color-palette-trigger):hover{background:#1d2a42!important;border-color:#5a70a2!important}
-.inspector button.active:not(.collapse-button):not(.color-palette-trigger){background:#263b67!important;border-color:#7897f5!important;color:#fff!important}
-
 /* Printout v2: hierarchy/document only. Never render the graph canvas in Printout. */
 .workspace-toolbar.is-printout-toolbar>.interaction-mode,
 .workspace-toolbar.is-printout-toolbar>.saved-view-control,
