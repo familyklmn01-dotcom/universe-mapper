@@ -14,10 +14,24 @@ const project={
   savedViews:[{id:'v1',name:'Overview',viewport:{panX:2,panY:3,zoom:.8}}]
 }
 
-test('normalizer preserves canonical routing, frames, and views',()=>{
+test('normalizer preserves relationship style and applies dashed fallback only when style is missing',()=>{
   const data=normalizeData(project)
   assert.equal(data.relationships[0].waypoints[0].x,140)
   assert.equal(data.relationships[0].strokeStyle,'dashed')
+
+  const existingStyles=normalizeData({...project,relationships:[
+    {id:'solid',sourceId:'a',targetId:'b',type:'influences',strokeStyle:'solid',strokeWidth:3,color:'#ff00aa',startArrow:'none',endArrow:'none'},
+    {id:'dotted',sourceId:'b',targetId:'c',type:'influences',strokeStyle:'dotted',strokeWidth:2,color:'#00ffaa',startArrow:'none',endArrow:'none'},
+    {id:'legacy',sourceId:'a',targetId:'c',type:'influences'}
+  ]})
+  assert.deepEqual(existingStyles.relationships.map(r=>({id:r.id,strokeStyle:r.strokeStyle,strokeWidth:r.strokeWidth,color:r.color})),[
+    {id:'solid',strokeStyle:'solid',strokeWidth:3,color:'#ff00aa'},
+    {id:'dotted',strokeStyle:'dotted',strokeWidth:2,color:'#00ffaa'},
+    {id:'legacy',strokeStyle:'dashed',strokeWidth:1.7,color:''}
+  ])
+
+  const restored=normalizeData(JSON.parse(JSON.stringify(existingStyles)))
+  assert.deepEqual(restored.relationships.map(r=>r.strokeStyle),['solid','dotted','dashed'])
   assert.equal(data.nodes[0].description,'Mother A')
   assert.equal(data.annotations[0].kind,'frame')
   assert.equal(data.savedViews[0].name,'Overview')
@@ -57,12 +71,12 @@ test('interaction contract keeps relationship appearance unchanged on selection'
   const edgeBlock = source.slice(source.indexOf('const renderEdge='), source.indexOf('// Relationships are canvas infrastructure'))
   assert.match(edgeBlock, /onSelectObject\?\.\(\{type:'relationship',id:edge\.id\}\)/)
   assert.match(edgeBlock, /onOpenProperties\?\.\(\{type:'relationship',id:edge\.id\}\)/)
-  assert.doesNotMatch(edgeBlock, /setEdgeEditor\(edge\).*onSelectObject/)
-  assert.doesNotMatch(styles, /\.edge-group\.active \.edge\{/)
+  assert.doesNotMatch(edgeBlock, /commit\([^)]*strokeStyle/)
+  assert.doesNotMatch(styles, /\.edge-group\.active \.edge\{filter:none!important/)
 })
 
 test('root scope is passed explicitly into GraphCanvas', async () => {
   const source = await import('node:fs/promises').then(fs => fs.readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'))
-  assert.match(source, /<GraphCanvas rootScopeId=\{rootScopeId\}/)
-  assert.match(source, /function GraphCanvas\(\{ rootScopeId, palettePos/)
+  assert.match(source, /rootScopeId=\{rootScopeId\}/)
+  assert.match(source, /function GraphCanvas\(\{ palettePos, paletteDragRef, rootScopeId,/)
 })
