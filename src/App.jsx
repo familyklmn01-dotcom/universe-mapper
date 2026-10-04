@@ -95,7 +95,7 @@ function EnhancedAnalysisCenter({ mode='formula', initialTarget=null, setMode, d
   </section></div>
 }
 
-export function EditorApp({ user=null, onExit=null, projectId=null, initialData=null, onDataChange=null, readOnly=false, syncStatus='', demoMode=false, onDemoAction=null, onDemoLimitReached=null }) {
+export function EditorApp({ user=null, onExit=null, projectId=null, initialData=null, onDataChange=null, readOnly=false, syncStatus='', demoMode=false, onDemoAction=null, onDemoLimitReached=null, onDemoSelect=null }) {
   const [data, setData] = useState(()=>initialData?normalizeData(initialData):(projectId?loadProjectData(projectId):loadData()))
   const [selectedId, setSelectedId] = useState('journey')
   const [selectedIds, setSelectedIds] = useState(['journey'])
@@ -135,11 +135,6 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
 
   const commit = next => {
     if(readOnly){setNotice({type:'info',text:'Viewer access is read-only. Ask the Owner for Editor access.'});return}
-    if(demoMode && onDemoAction && !onDemoAction()){
-      setNotice({type:'info',text:'Demo limit reached. Sign in to continue editing Universe Mapper.'});
-      onDemoLimitReached?.();
-      return
-    }
     const current=clone(dataRef.current)
     const resolved=normalizeData(typeof next === 'function' ? next(clone(current)) : next)
     setHistory(items => [...items.slice(-49), current])
@@ -206,7 +201,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
   const requestDeleteStructure = structure => { if(!structure) return; const count=data.nodes.filter(n=>n.structureId===structure.id).length; setDeleteConfirm({count:Math.max(1,count),name:structure.name,target:{type:'structure',id:structure.id,name:structure.name}}) }
   const createMainStructure=()=>{const structureId=createId('structure'),nodeId=createId('node');commit(next=>{const maxZ=Math.max(0,...next.nodes.map(n=>Number(n.zIndex)||0),...(next.annotations||[]).map(a=>Number(a.zIndex)||0));next.structures=[...(next.structures||[]),{id:structureId,name:`Main Structure ${(next.structures||[]).length+1}`,description:''}];next.nodes.push({id:nodeId,structureId,parentId:null,name:'New Main Structure',type:'category',value:'',description:'',status:'draft',zIndex:maxZ+1,x:360,y:220,width:184,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}});return next});setStructureFilter(structureId);setSelectedIds([nodeId]);setSelectedId(nodeId);setSelectedObject({type:'node',id:nodeId});setPropertyTarget({type:'node',id:nodeId});setRightCollapsed(false);setView('graph');setTimeout(()=>window.dispatchEvent(new CustomEvent('um:edit-node',{detail:{id:nodeId}})),0);setNotice({type:'success',text:'Main Structure baru dibuat. Pilih/drag Node untuk menambahkan child.'})}
   const selectOne=id=>{setSelectedId(id);setSelectedIds(id?[id]:[]);const target=id?{type:'node',id}:null;setSelectedObject(target);setPropertyTarget(target)}
-  const handleSelectObject=target=>{if(!target){setSelectedObject(null);setPropertyTarget(null);return}setSelectedObject(target);setPropertyTarget(target);setRightCollapsed(false)}
+  const handleSelectObject=target=>{if(!target){setSelectedObject(null);setPropertyTarget(null);return}setSelectedObject(target);setPropertyTarget(target);setRightCollapsed(false);onDemoSelect?.(target)}
   const handleOpenProperties=target=>{setSelectedObject(target);setPropertyTarget(target||null);if(target)setRightCollapsed(false)}
   const openUniverse=async event=>{const file=event.target.files?.[0];if(!file)return;try{const parsed=file.name.toLowerCase().endsWith('.mf')?await readMapperFile(file):normalizeData(JSON.parse(await file.text()));setData(parsed);dataRef.current=parsed;selectOne(parsed.nodes[0]?.id||null);setHistory([]);setFuture([]);setStructureFilter('all');setNotice({type:'success',text:`${file.name} berhasil dibuka.`})}catch(error){setNotice({type:'error',text:`File tidak valid: ${error.message}`})}finally{event.target.value=''}}
   const saveUniverse=async()=>saveBlobAs(`${safeName(data.universe.name)}.mf`,await createMapperFile(data))
@@ -563,7 +558,47 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
     else if(connectorRef.current){const current=point(event),sourceId=connectorRef.current.sourceId,target=shownNodes.find(n=>{if(n.id===sourceId)return false;const q=pos(n),s=size(n);return current.x>=q.x&&current.x<=q.x+s.width&&current.y>=q.y&&current.y<=q.y+s.height});setDropTarget(target?.id||null);setConnectorDraft({start:connectorRef.current.start,current})}
     else if(resizeRef.current){const d=resizeRef.current;setDraftSizes(current=>({...current,[d.id]:{width:Math.max(1,d.width+(event.clientX-d.startX)/zoom),height:Math.max(1,d.height+(event.clientY-d.startY)/zoom)}}))}
     else if(edgeEndpointRef.current){const d=edgeEndpointRef.current,p=point(event),edge=edges.find(r=>r.id===d.id),node=edge?(d.endpoint==='source'?shownNodes.find(n=>n.id===edge.sourceId):shownNodes.find(n=>n.id===edge.targetId)):null;if(node){d.moved=d.moved||Math.hypot(event.clientX-d.start.x,event.clientY-d.start.y)>4;const port=endpointSideFromPointer(node,p);d.finalPort=port;if(port!==edgeEndpointDraft?.port||edgeEndpointDraft?.id!==d.id||edgeEndpointDraft?.endpoint!==d.endpoint)setEdgeEndpointDraft({id:d.id,endpoint:d.endpoint,port})}}
-    else if(edgeDragRef.current){const p=point(event),d=edgeDragRef.current;d.moved=d.moved||Math.hypot(event.clientX-d.start.x,event.clientY-d.start.y)>4;if(d.moved){if(d.kind==='segment'){const segment=d.geometry?.points?.[d.segmentIndex]&&d.geometry?.points?.[d.segmentIndex+1]?{a:d.geometry.points[d.segmentIndex],b:d.geometry.points[d.segmentIndex+1]}:null;if(segment){const dx=segment.b.x-segment.a.x,dy=segment.b.y-segment.a.y,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux,deltaX=event.clientX-d.start.x,deltaY=event.clientY-d.start.y,delta=(deltaX/zoom)*nx+(deltaY/zoom)*ny,snapped=Math.abs(delta)<3?0:snapValue(delta,12),waypoints=d.geometry.points.slice(1,-1).map(item=>({...item})),first=d.segmentIndex-1,second=d.segmentIndex;if(waypoints[first]){waypoints[first].x+=nx*snapped;waypoints[first].y+=ny*snapped}if(waypoints[second]){waypoints[second].x+=nx*snapped;waypoints[second].y+=ny*snapped}d.finalWaypoints=waypoints.map(item=>({...item}));routeDraftRef.current={id:d.id,waypoints:d.finalWaypoints};setRouteDraft({id:d.id,waypoints:d.finalWaypoints})}}else{{const current=routeDraftRef.current||routeDraft;if(current){const waypoints=current.waypoints.map((item,index)=>index===d.index?{x:snapValue(p.x,12),y:snapValue(p.y,12)}:item);routeDraftRef.current={id:current.id,waypoints};setRouteDraft({id:current.id,waypoints})}}}}}
+    else if(edgeDragRef.current){const p=point(event),d=edgeDragRef.current;d.moved=d.moved||Math.hypot(event.clientX-d.start.x,event.clientY-d.start.y)>4;if(d.moved){if(d.kind==='segment'){const segment=d.geometry?.points?.[d.segmentIndex]&&d.geometry?.points?.[d.segmentIndex+1]?{a:d.geometry.points[d.segmentIndex],b:d.geometry.points[d.segmentIndex+1]}:null;if(segment){
+  const dx=segment.b.x-segment.a.x,dy=segment.b.y-segment.a.y,len=Math.hypot(dx,dy)||1,
+    ux=dx/len,uy=dy/len,nx=-uy,ny=ux,
+    deltaX=event.clientX-d.start.x,deltaY=event.clientY-d.start.y,
+    delta=(deltaX/zoom)*nx+(deltaY/zoom)*ny,
+    snapped=Math.abs(delta)<3?0:snapValue(delta,12),
+    waypoints=d.geometry.points.slice(1,-1).map(item=>({...item})),
+    first=d.segmentIndex-1,second=d.segmentIndex,
+    diagonal=Math.abs(dx)>2&&Math.abs(dy)>2,
+    nearHorizontal=Math.abs(dy)<=Math.abs(dx),
+    targetAxis=nearHorizontal?'horizontal':'vertical';
+
+  // Manual segment drag is allowed to straighten a diagonal segment.
+  // Keep node endpoints fixed; only free waypoint coordinates are adjusted.
+  if(diagonal){
+    if(targetAxis==='horizontal'){
+      const fixedA=!waypoints[first],fixedB=!waypoints[second];
+      const y=fixedA?segment.a.y:fixedB?segment.b.y:(segment.a.y+segment.b.y)/2;
+      if(waypoints[first])waypoints[first].y=y;
+      if(waypoints[second])waypoints[second].y=y;
+    }else{
+      const fixedA=!waypoints[first],fixedB=!waypoints[second];
+      const x=fixedA?segment.a.x:fixedB?segment.b.x:(segment.a.x+segment.b.x)/2;
+      if(waypoints[first])waypoints[first].x=x;
+      if(waypoints[second])waypoints[second].x=x;
+    }
+  }
+  if(waypoints[first]){waypoints[first].x+=nx*snapped;waypoints[first].y+=ny*snapped}
+  if(waypoints[second]){waypoints[second].x+=nx*snapped;waypoints[second].y+=ny*snapped}
+  // Port-adjacent segments snap exactly to the selected node port axis.
+  if(d.segmentIndex===0){
+    const side=d.geometry.sourceSide;
+    if(waypoints[second]){if(side==='left'||side==='right')waypoints[second].y=d.geometry.sourcePoint.y;else waypoints[second].x=d.geometry.sourcePoint.x}
+  }
+  if(d.segmentIndex===d.geometry.points.length-2){
+    const side=d.geometry.targetSide;
+    if(waypoints[first]){if(side==='left'||side==='right')waypoints[first].y=d.geometry.targetPoint.y;else waypoints[first].x=d.geometry.targetPoint.x}
+  }
+  d.finalWaypoints=waypoints.map(item=>({...item}));
+  routeDraftRef.current={id:d.id,waypoints:d.finalWaypoints};setRouteDraft({id:d.id,waypoints:d.finalWaypoints})
+}}else{{const current=routeDraftRef.current||routeDraft;if(current){const waypoints=current.waypoints.map((item,index)=>index===d.index?{x:snapValue(p.x,12),y:snapValue(p.y,12)}:item);routeDraftRef.current={id:current.id,waypoints};setRouteDraft({id:current.id,waypoints})}}}}}
     else if(waypointRef.current){const p=point(event),d=waypointRef.current;const current=routeDraftRef.current||routeDraft;if(current){const waypoints=current.waypoints.map((item,index)=>index===d.index?{x:snapValue(p.x,12),y:snapValue(p.y,12)}:item);d.finalWaypoints=waypoints.map(item=>({...item}));routeDraftRef.current={id:current.id,waypoints:d.finalWaypoints};setRouteDraft({id:current.id,waypoints:d.finalWaypoints})}}
     else if (dragRef.current) { const p=point(event),d=dragRef.current;d.moved=d.moved||Math.hypot(event.clientX-d.start.x,event.clientY-d.start.y)>5;if(!d.moved)return;const dx=p.x-d.origin.x,dy=p.y-d.origin.y,updated={...positionRef.current};d.ids.forEach(id=>{const o=d.origins[id];updated[id]={x:Math.max(0,event.shiftKey?o.x+dx:snapValue(o.x+dx,12)),y:Math.max(0,event.shiftKey?o.y+dy:snapValue(o.y+dy,12))}});positionRef.current=updated;setDraftPositions(updated) }
     else if(selectRef.current){const p=point(event),s=selectRef.current;setSelectionBox({x:Math.min(s.x,p.x),y:Math.min(s.y,p.y),w:Math.abs(p.x-s.x),h:Math.abs(p.y-s.y)})}else pointerMove(event)
@@ -687,7 +722,33 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
     }
     return marks;
   })()
-  const renderEdge=edge=>{const ar=data.nodes.find(n=>n.id===edge.sourceId),br=data.nodes.find(n=>n.id===edge.targetId);if(!ar||!br)return null;const route=edgePath(edge,{...ar,...pos(ar)},{...br,...pos(br)}),active=edgeEditor?.id===edge.id,points=route.points||[],interiorSegments=points.slice(0,-1).map((a,index)=>({a,b:points[index+1],index})).filter(seg=>seg.index>0&&seg.index<points.length-2);return <g className={`edge-group ${active?'active':''}`} key={edge.id} onPointerDown={event=>{event.preventDefault();event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id})}} onClick={event=>{event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id})}} onContextMenu={event=>{event.preventDefault();event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id});setContextMenu({id:edge.id,type:'relationship',x:event.clientX,y:event.clientY})}} onDoubleClick={event=>{if(edge.type==='contains'||edge.id.startsWith('formula-'))return;event.preventDefault();event.stopPropagation();const p=point(event);commit(next=>{const currentWaypoints=edge.waypoints||[];return commitRelationshipRoute(next,edge.id,[...currentWaypoints,{x:snapValue(p.x,12),y:snapValue(p.y,12)}])});setEdgeEditor({...edge,waypoints:[...(edge.waypoints||[]),p]})}}><path className="edge-hit" d={route.d}/><path className={`edge ${edge.type}`} d={route.d} style={{stroke:edge.color||'#5e6a80',strokeWidth:Number(edge.strokeWidth)||1.7,strokeDasharray:edge.strokeStyle==='dashed'?'9 6':edge.strokeStyle==='dotted'?'2 5':'none'}} markerStart={edge.startArrow&&edge.startArrow!=='none'?'url(#um-arrow-start)':undefined} markerEnd={edge.endArrow===false||edge.endArrow==='none'?'none':'url(#um-arrow-end)'}/>{bridgeMarks.filter(mark=>mark.lowerEdge?.id===edge.id).map((mark,index)=>{const a=mark.lowerSegment.a,b=mark.lowerSegment.b,dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;return <path key={`bridge-gap-${edge.id}-${index}`} d={`M${mark.x-dx/len*9},${mark.y-dy/len*9} L${mark.x+dx/len*9},${mark.y+dy/len*9}`} fill="none" stroke={canvasTheme==='light'?'#f7f8fa':'#090e19'} strokeWidth={Math.max(9,Number(edge.strokeWidth||1.7)+8)} strokeLinecap="round"/>})}{interiorSegments.map(seg=>{const horizontal=Math.abs(seg.b.x-seg.a.x)>=Math.abs(seg.b.y-seg.a.y);return <path key={`segment-hit-${seg.index}`} className={`edge-segment-hit ${horizontal?'horizontal':'vertical'}`} d={`M${seg.a.x},${seg.a.y} L${seg.b.x},${seg.b.y}`} onPointerDown={event=>beginEdgeSegmentDrag(event,edge,ar,br,seg.index)} pointerEvents="stroke"/>})}{edge.type!=='contains'&&<text className="edge-label" x={route.lx} y={route.ly} textAnchor="middle">{edge.weight&&edge.weight!==1?edge.weight:edge.type}</text>}{active&&(route.waypoints||[]).map((item,index)=><circle className="route-waypoint" key={index} cx={item.x} cy={item.y} r="6" onPointerDown={event=>{event.preventDefault();event.stopPropagation();waypointRef.current={id:edge.id,index,finalWaypoints:null};{const waypoints=[...(edge.waypoints||[])].map(item=>({...item}));routeDraftRef.current={id:edge.id,waypoints};setRouteDraft({id:edge.id,waypoints})};svgRef.current.setPointerCapture(event.pointerId)}}/>)}</g>}
+  const routePathWithBridgeGaps=(edge,route)=>{
+    const points=route.points||[];
+    const marks=bridgeMarks.filter(mark=>mark.lowerEdge?.id===edge.id);
+    if(!marks.length||points.length<2)return route.d;
+    const pieces=[];
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+      const gaps=marks.filter(mark=>{
+        const ax=mark.lowerSegment.a, bx=mark.lowerSegment.b;
+        return (Math.abs(ax.x-a.x)<0.01&&Math.abs(ax.y-a.y)<0.01&&Math.abs(bx.x-b.x)<0.01&&Math.abs(bx.y-b.y)<0.01) ||
+          (Math.abs(ax.x-b.x)<0.01&&Math.abs(ax.y-b.y)<0.01&&Math.abs(bx.x-a.x)<0.01&&Math.abs(bx.y-a.y)<0.01);
+      }).map(mark=>{
+        const t=((mark.x-a.x)*dx+(mark.y-a.y)*dy)/(len*len);
+        return {from:Math.max(0,t-10/len),to:Math.min(1,t+10/len)};
+      }).filter(g=>g.to>0&&g.from<1).sort((x,y)=>x.from-y.from);
+      if(!gaps.length){pieces.push(`M${a.x},${a.y} L${b.x},${b.y}`);continue}
+      let cursor=0;
+      gaps.forEach(g=>{
+        const from=Math.max(cursor,g.from),to=Math.min(1,g.to);
+        if(from>cursor){const x1=a.x+dx*cursor,y1=a.y+dy*cursor,x2=a.x+dx*from,y2=a.y+dy*from;pieces.push(`M${x1},${y1} L${x2},${y2}`)}
+        cursor=Math.max(cursor,to);
+      });
+      if(cursor<1){const x1=a.x+dx*cursor,y1=a.y+dy*cursor;pieces.push(`M${x1},${y1} L${b.x},${b.y}`)}
+    }
+    return pieces.join(' ');
+  }
+  const renderEdge=edge=>{const ar=data.nodes.find(n=>n.id===edge.sourceId),br=data.nodes.find(n=>n.id===edge.targetId);if(!ar||!br)return null;const route=edgePath(edge,{...ar,...pos(ar)},{...br,...pos(br)}),active=edgeEditor?.id===edge.id,points=route.points||[],interiorSegments=points.slice(0,-1).map((a,index)=>({a,b:points[index+1],index})).filter(seg=>seg.index>0&&seg.index<points.length-2);return <g className={`edge-group ${active?'active':''}`} key={edge.id} onPointerDown={event=>{event.preventDefault();event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id})}} onClick={event=>{event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id})}} onContextMenu={event=>{event.preventDefault();event.stopPropagation();setAnnotationSelectedId(null);setEdgeEditor(edge);onSelectObject?.({type:'relationship',id:edge.id});onOpenProperties?.({type:'relationship',id:edge.id});setContextMenu({id:edge.id,type:'relationship',x:event.clientX,y:event.clientY})}} onDoubleClick={event=>{if(edge.type==='contains'||edge.id.startsWith('formula-'))return;event.preventDefault();event.stopPropagation();const p=point(event);commit(next=>{const currentWaypoints=edge.waypoints||[];return commitRelationshipRoute(next,edge.id,[...currentWaypoints,{x:snapValue(p.x,12),y:snapValue(p.y,12)}])});setEdgeEditor({...edge,waypoints:[...(edge.waypoints||[]),p]})}}><path className="edge-hit" d={route.d}/><path className={`edge ${edge.type}`} d={routePathWithBridgeGaps(edge,route)} style={{stroke:edge.color||'#5e6a80',strokeWidth:Number(edge.strokeWidth)||1.7,strokeDasharray:edge.strokeStyle==='dashed'?'9 6':edge.strokeStyle==='dotted'?'2 5':'none'}} markerStart={edge.startArrow&&edge.startArrow!=='none'?'url(#um-arrow-start)':undefined} markerEnd={edge.endArrow===false||edge.endArrow==='none'?'none':'url(#um-arrow-end)'}/>{interiorSegments.map(seg=>{const horizontal=Math.abs(seg.b.x-seg.a.x)>=Math.abs(seg.b.y-seg.a.y);return <path key={`segment-hit-${seg.index}`} className={`edge-segment-hit ${horizontal?'horizontal':'vertical'}`} d={`M${seg.a.x},${seg.a.y} L${seg.b.x},${seg.b.y}`} onPointerDown={event=>beginEdgeSegmentDrag(event,edge,ar,br,seg.index)} pointerEvents="stroke"/>})}{edge.type!=='contains'&&<text className="edge-label" x={route.lx} y={route.ly} textAnchor="middle">{edge.weight&&edge.weight!==1?edge.weight:edge.type}</text>}{active&&(route.waypoints||[]).map((item,index)=><circle className="route-waypoint" key={index} cx={item.x} cy={item.y} r="6" onPointerDown={event=>{event.preventDefault();event.stopPropagation();waypointRef.current={id:edge.id,index,finalWaypoints:null};{const waypoints=[...(edge.waypoints||[])].map(item=>({...item}));routeDraftRef.current={id:edge.id,waypoints};setRouteDraft({id:edge.id,waypoints})};svgRef.current.setPointerCapture(event.pointerId)}}/>)}</g>}
   // Relationships are canvas infrastructure: always render behind objects.
   // Object z-order is controlled only by the object's own layer actions.
   const frameObjects=(data.annotations||[]).filter(item=>item.kind==='frame').map(item=>({kind:'annotation',item,z:Number(item.zIndex)||0})); const otherAnnotations=(data.annotations||[]).filter(item=>item.kind!=='frame').map(item=>({kind:'annotation',item,z:Number(item.zIndex)||0})); const layeredObjects=[...frameObjects,...edges.map(item=>({kind:'edge',item,z:100000})),...otherAnnotations,...shownNodes.map(item=>({kind:'node',item,z:Number(item.zIndex)||0}))]

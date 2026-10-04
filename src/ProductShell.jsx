@@ -4,6 +4,7 @@ import { getFirebaseServices, isOnlineApp } from './lib/firebase.js'
 import { createId, loadProjectData, normalizeData, saveData, saveProjectData, storageGet, storageSet } from './lib/store.js'
 import UniverseLogo from './components/UniverseLogo.jsx'
 import { sampleData } from './data/sampleData.js'
+import { demoGuide, demoGuideStorageKey } from './demo/demoGuide.js'
 
 const PROJECT_KEY='um-projects-v1'
 const readProjects=()=>{try{const value=JSON.parse(storageGet(PROJECT_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
@@ -19,8 +20,8 @@ const friendlyError=error=>({
 }[error?.code]||error?.message||'Something went wrong.')
 
 export default function ProductShell(){
-  const [screen,setScreen]=useState('landing'),[user,setUser]=useState(null),[activeProject,setActiveProject]=useState(null),[editorData,setEditorData]=useState(null),[syncStatus,setSyncStatus]=useState(''),[loading,setLoading]=useState(isOnlineApp()),[message,setMessage]=useState(''),[busy,setBusy]=useState(false)
-  const syncTimer=useRef(null),lastQueuedSignature=useRef(''),pendingCloudWrite=useRef(null),demoEditsRef=useRef(Number(storageGet('um-demo-edits-v1')||0))
+  const [screen,setScreen]=useState('landing'),[user,setUser]=useState(null),[activeProject,setActiveProject]=useState(null),[editorData,setEditorData]=useState(null),[syncStatus,setSyncStatus]=useState(''),[loading,setLoading]=useState(isOnlineApp()),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[demoStep,setDemoStep]=useState(0),[demoComplete,setDemoComplete]=useState(false)
+  const syncTimer=useRef(null),lastQueuedSignature=useRef(''),pendingCloudWrite=useRef(null)
   useEffect(()=>{if(screen!=='editor'||activeProject?.source!=='cloud')return;let unsubscribe;getFirebaseServices().then(({db,firestoreSdk})=>{unsubscribe=firestoreSdk.onSnapshot(firestoreSdk.doc(db,'universes',activeProject.id),snapshot=>{const cloud=snapshot.data()?.data;if(!cloud)return;const normalized=normalizeData(cloud),signature=JSON.stringify(normalized),pending=pendingCloudWrite.current;
       // A Firestore snapshot can legally arrive with the PREVIOUS document while our
       // optimistic local edit is waiting in the 1.2s debounce / write pipeline.
@@ -44,9 +45,16 @@ export default function ProductShell(){
   const openProject=async project=>{setSyncStatus('');let data=loadProjectData(project.id);if(project.source==='cloud')try{setSyncStatus('Loading cloud');const {db,firestoreSdk}=await getFirebaseServices(),snapshot=await firestoreSdk.getDoc(firestoreSdk.doc(db,'universes',project.id));if(snapshot.exists()&&snapshot.data().data)data=normalizeData(snapshot.data().data);saveProjectData(project.id,data);setSyncStatus('Cloud ready')}catch(error){setSyncStatus('Local fallback');setMessage(friendlyError(error))}lastQueuedSignature.current=JSON.stringify(data);setActiveProject(project);setEditorData(data);setScreen('editor')}
   const syncCloud=useCallback(data=>{if(!activeProject||activeProject.source!=='cloud'||!user||activeProject.role==='Viewer')return;const signature=JSON.stringify(data);if(signature===lastQueuedSignature.current&&!pendingCloudWrite.current)return;lastQueuedSignature.current=signature;pendingCloudWrite.current={signature};clearTimeout(syncTimer.current);setSyncStatus('Unsaved changes');syncTimer.current=setTimeout(()=>{const writeSignature=signature;setSyncStatus('Saving');getFirebaseServices().then(async({db,firestoreSdk})=>{await firestoreSdk.updateDoc(firestoreSdk.doc(db,'universes',activeProject.id),{data,updatedAt:firestoreSdk.serverTimestamp()});for(const presentation of data.presentations||[]){const {scenes,...record}=presentation,presentationRef=firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id);await firestoreSdk.setDoc(presentationRef,{...record,ownerId:user.uid,sceneCount:scenes.length,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});for(const scene of scenes)await firestoreSdk.setDoc(firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id,'scenes',scene.id),scene,{merge:true})}}).then(()=>{if(pendingCloudWrite.current?.signature===writeSignature)setSyncStatus('Saving');else setSyncStatus('Unsaved changes')}).catch(()=>{if(pendingCloudWrite.current?.signature===writeSignature)pendingCloudWrite.current=null;lastQueuedSignature.current='';setSyncStatus('Save failed')})},1200)},[activeProject,user])
   if(loading)return <div className="shell-loading"><UniverseLogo className="loading-logo"/><p>Loading Universe Mapper…</p></div>
-  const consumeDemoAction=()=>{if(!user?.demo)return true;const limit=5,current=Number(demoEditsRef.current)||0;if(current>=limit)return false;const next=current+1;demoEditsRef.current=next;storageSet('um-demo-edits-v1',String(next));return true}
-  const onDemoLimitReached=()=>{setMessage('Demo access is limited. Sign in to continue editing Universe Mapper.');setScreen('signin')}
-  if(screen==='editor')return <EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} demoMode={Boolean(user?.demo)} onDemoAction={consumeDemoAction} onDemoLimitReached={onDemoLimitReached} syncStatus={syncStatus} onDataChange={syncCloud} onExit={()=>setScreen('projects')}/>
+  const onDemoSelect=target=>{
+    if(!user?.demo||demoComplete)return;
+    const step=demoGuide.steps[demoStep];
+    if(step?.target==='node'&&target?.type==='node'){setDemoStep(1);return}
+    if(step?.target==='relationship'&&target?.type==='relationship'){setDemoStep(2)}
+  }
+  const finishDemo=()=>{setDemoComplete(true);storageSet(demoGuideStorageKey,'completed')}
+  const nextDemoStep=()=>{if(demoStep>=demoGuide.steps.length-1){finishDemo();return}setDemoStep(value=>Math.min(value+1,demoGuide.steps.length-1))}
+  const loginFromDemo=()=>{setDemoComplete(false);setUser(null);setActiveProject(null);setEditorData(null);setScreen('signin')}
+  if(screen==='editor')return <><EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} demoMode={Boolean(user?.demo)} syncStatus={syncStatus} onDataChange={syncCloud} onDemoSelect={onDemoSelect} onExit={()=>setScreen('projects')}/>{user?.demo&&!demoComplete&&<GuidedDemoOverlay step={demoGuide.steps[demoStep]} stepIndex={demoStep} total={demoGuide.steps.length} onNext={nextDemoStep} onSkip={finishDemo}/>} {user?.demo&&demoComplete&&<DemoCompleteOverlay title={demoGuide.completionTitle} text={demoGuide.completionText} action={demoGuide.completionAction} onLogin={loginFromDemo} onReplay={()=>{setDemoComplete(false);setDemoStep(0)}}/>}</>
   if(screen==='projects')return <ProjectManager user={user} onOpen={openProject} onProfile={()=>setScreen('profile')} onLogout={logout}/>
   if(screen==='profile')return <Profile user={user} activeProject={activeProject} onContinue={()=>setScreen(activeProject?'editor':'projects')} onProjects={()=>setScreen('projects')} onLogout={logout}/>
   if(screen==='verify')return <Verification user={user} message={message} busy={busy} onResend={resend} onRefresh={()=>run(async()=>{await user.reload();if(user.emailVerified)setScreen('projects');else setMessage('Email is not verified yet.')})} onLogout={logout}/>
@@ -58,25 +66,48 @@ export default function ProductShell(){
         ...sampleData.universe,
         id: demoId,
         name: 'Business Universe Demo',
-        description: 'A ready-to-explore Universe showing structure, relationships, formulas, and scenarios.'
+        description: 'Guided example Universe for learning the main Universe Mapper workflow.'
       }
     })
-    const demoProject = {
-      id: demoId,
-      name: demoData.universe.name,
-      ownerId: 'local-demo',
-      role: 'Owner',
-      updatedAt: new Date().toISOString(),
-      source: 'local'
-    }
+    const demoProject = {id:demoId,name:demoData.universe.name,ownerId:'local-demo',role:'Owner',updatedAt:new Date().toISOString(),source:'local'}
     saveData(demoData)
-    saveProjectData(demoId, demoData)
-    const projects = readProjects().filter(item => item.id !== demoId)
-    writeProjects([demoProject, ...projects].filter(item => item.source !== 'cloud'))
+    saveProjectData(demoId,demoData)
     setUser({displayName:'Demo User',email:'demo@local',emailVerified:true,demo:true})
-    setScreen('projects')
+    setActiveProject(demoProject)
+    setEditorData(demoData)
+    setDemoStep(0)
+    setDemoComplete(false)
+    setScreen('editor')
   }
   return <Landing screen={screen} setScreen={setScreen} message={message} busy={busy} signIn={signIn} signUp={signUp} google={google} reset={reset} demo={openOfflineDemo}/>
+}
+
+
+function GuidedDemoOverlay({step,stepIndex,total,onNext,onSkip}){
+  if(!step)return null
+  return <div style={{position:'fixed',left:24,bottom:24,width:360,maxWidth:'calc(100vw - 48px)',zIndex:1200,padding:'18px 18px 16px',border:'1px solid rgba(120,151,245,.35)',borderRadius:16,background:'rgba(12,18,31,.96)',boxShadow:'0 18px 50px rgba(0,0,0,.35)',color:'#eef3ff'}}>
+    <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.62,marginBottom:7}}>Guided Demo · {stepIndex+1}/{total}</div>
+    <strong style={{display:'block',fontSize:17,marginBottom:7}}>{step.title}</strong>
+    <p style={{margin:'0 0 14px',lineHeight:1.5,fontSize:13,color:'#c8d1e5'}}>{step.text}</p>
+    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+      <button onClick={onSkip} style={{border:0,background:'transparent',color:'#aeb9ce',padding:'8px 10px',cursor:'pointer'}}>Skip</button>
+      {!step.autoAdvance&&<button onClick={onNext} style={{border:'1px solid #7897f5',background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:9,padding:'8px 13px',cursor:'pointer'}}>{stepIndex===total-1?'Finish demo':'I tried it'}</button>}
+    </div>
+  </div>
+}
+
+function DemoCompleteOverlay({title,text,action,onLogin,onReplay}){
+  return <div style={{position:'fixed',inset:0,zIndex:1300,display:'grid',placeItems:'center',background:'rgba(4,8,15,.68)',backdropFilter:'blur(5px)'}}>
+    <section style={{width:440,maxWidth:'calc(100vw - 40px)',padding:26,border:'1px solid rgba(120,151,245,.38)',borderRadius:18,background:'#101827',color:'#eef3ff',boxShadow:'0 24px 70px rgba(0,0,0,.45)'}}>
+      <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.62,marginBottom:8}}>Universe Mapper</div>
+      <h2 style={{margin:'0 0 10px',fontSize:24}}>{title}</h2>
+      <p style={{margin:'0 0 20px',lineHeight:1.55,color:'#c8d1e5'}}>{text}</p>
+      <div style={{display:'flex',gap:10}}>
+        <button onClick={onReplay} style={{flex:1,border:'1px solid #35445e',background:'transparent',color:'#dce5f7',borderRadius:10,padding:'10px 14px',cursor:'pointer'}}>Replay Demo</button>
+        <button onClick={onLogin} style={{flex:1,border:0,background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:10,padding:'10px 14px',cursor:'pointer'}}>{action}</button>
+      </div>
+    </section>
+  </div>
 }
 
 function ProjectManager({user,onOpen,onProfile,onLogout}){
