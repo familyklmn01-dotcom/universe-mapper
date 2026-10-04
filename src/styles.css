@@ -316,7 +316,7 @@
 /* Relationship endpoint editing + palette ownership */
 .inspector .color-swatch-grid button{background-color:var(--swatch-color,transparent)!important;background-image:none!important;box-shadow:none!important;}
 .color-palette-popover .color-swatch-grid button[style]{background-color:var(--swatch-color)!important;}
-.edge-endpoint-hit{fill:#7897f5;fill-opacity:.18;stroke:#7897f5;stroke-opacity:.75;stroke-width:2;cursor:grab;pointer-events:all;}
+.edge-endpoint-hit{fill:#7897f5;fill-opacity:.18;stroke:#7897f5;stroke-opacity:.9;stroke-width:2;cursor:grab;pointer-events:all;vector-effect:non-scaling-stroke;}
 .edge-endpoint-hit:hover{fill-opacity:.45;stroke-opacity:1;}
 .edge-endpoint-hit:active{cursor:grabbing;}
 .relationship-bridges{isolation:isolate;}
