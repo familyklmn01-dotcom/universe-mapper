@@ -102,9 +102,56 @@ export default function ProductShell(){
 
 
 function GuidedDemoOverlay({step,stepIndex,total,onNext}){
+  const [position,setPosition]=useState(null)
+  const dragRef=useRef(null)
+  useEffect(()=>{
+    const clamp=()=>{
+      const el=dragRef.current?.element
+      if(!el)return
+      const area=document.querySelector('.canvas')||document.querySelector('.workspace')
+      if(!area)return
+      const areaRect=area.getBoundingClientRect()
+      const rect=el.getBoundingClientRect()
+      const maxLeft=Math.max(areaRect.left,areaRect.right-rect.width)
+      const maxTop=Math.max(areaRect.top,areaRect.bottom-rect.height)
+      const next={
+        x:Math.min(Math.max(rect.left,areaRect.left),maxLeft),
+        y:Math.min(Math.max(rect.top,areaRect.top),maxTop)
+      }
+      setPosition(current=>current&&Math.abs(current.x-next.x)<.5&&Math.abs(current.y-next.y)<.5?current:next)
+    }
+    const timer=requestAnimationFrame(clamp)
+    window.addEventListener('resize',clamp)
+    return()=>{cancelAnimationFrame(timer);window.removeEventListener('resize',clamp)}
+  },[])
+  const beginDrag=event=>{
+    if(event.button!==0)return
+    const el=event.currentTarget.closest('[data-guided-demo-overlay]')
+    const area=document.querySelector('.canvas')||document.querySelector('.workspace')
+    if(!el||!area)return
+    const rect=el.getBoundingClientRect(),areaRect=area.getBoundingClientRect()
+    dragRef.current={element:el,areaRect,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,moved:false}
+    el.setPointerCapture?.(event.pointerId)
+    event.preventDefault()
+  }
+  const moveDrag=event=>{
+    const drag=dragRef.current
+    if(!drag)return
+    const rect=drag.element.getBoundingClientRect(),areaRect=drag.areaRect
+    const maxLeft=Math.max(areaRect.left,areaRect.right-rect.width)
+    const maxTop=Math.max(areaRect.top,areaRect.bottom-rect.height)
+    const x=Math.min(Math.max(event.clientX-drag.offsetX,areaRect.left),maxLeft)
+    const y=Math.min(Math.max(event.clientY-drag.offsetY,areaRect.top),maxTop)
+    drag.moved=true
+    setPosition({x,y})
+  }
+  const endDrag=()=>{dragRef.current=null}
   if(!step)return null
-  return <div style={{position:'fixed',left:124,bottom:30,width:500,maxWidth:'calc(100vw - 160px)',zIndex:1200,padding:'22px 24px 20px',border:'1px solid rgba(255,255,255,.28)',borderRadius:16,background:'rgba(7,13,24,.98)',boxShadow:'0 20px 55px rgba(0,0,0,.46)',color:'#fff'}}>
-    <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.9,marginBottom:9,color:'#fff'}}>Guided Demo · Step {stepIndex+1} of {total}</div>
+  const positionStyle=position?{left:position.x,top:position.y,bottom:'auto'}:{left:124,bottom:30}
+  return <div data-guided-demo-overlay ref={el=>{if(el&&!dragRef.current)dragRef.current={element:el}}} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} style={{position:'fixed',...positionStyle,width:500,maxWidth:'calc(100vw - 160px)',zIndex:1200,padding:'22px 24px 20px',border:'1px solid rgba(255,255,255,.28)',borderRadius:16,background:'rgba(7,13,24,.98)',boxShadow:'0 20px 55px rgba(0,0,0,.46)',color:'#fff'}}>
+    <div onPointerDown={beginDrag} title="Drag to move within the canvas area" style={{cursor:'grab',margin:'-22px -24px 14px',padding:'12px 24px 10px',borderBottom:'1px solid rgba(255,255,255,.10)',userSelect:'none'}}>
+      <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.9,color:'#fff'}}>Guided Demo · Step {stepIndex+1} of {total}</div>
+    </div>
     <strong style={{display:'block',fontSize:18,marginBottom:8,color:'#fff'}}>{step.title}</strong>
     <p style={{margin:'0 0 18px',lineHeight:1.62,fontSize:15,color:'#fff'}}>{step.text}</p>
     <div style={{display:'flex',justifyContent:'flex-end'}}>
