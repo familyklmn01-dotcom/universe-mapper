@@ -1,36 +1,36 @@
 export const demoGuide = {
-  id: 'universe-guided-demo-v2',
+  id: 'universe-guided-demo-v3',
   title: 'Guided Demo — Universe Mapper',
-  subtitle: 'Ikuti empat langkah singkat. Tekan Next setelah membaca dan mencoba langkah yang sedang ditunjukkan.',
+  subtitle: 'Follow four short steps. You can still explore the available tools while the guide is visible.',
   steps: [
     {
       id: 'select-node',
-      title: '1. Pilih sebuah Node',
-      text: 'Klik satu kali Node pada contoh Universe. Perhatikan Inspector di kanan: Properties Node muncul tanpa menggeser canvas. Setelah melihatnya, tekan Next.',
+      title: '1. Select a Node',
+      text: 'Click the Customer node once. The Inspector on the right shows its Properties without moving the canvas. You can inspect the fields, then press Next.',
       target: 'node'
     },
     {
       id: 'edit-relationship',
-      title: '2. Coba Relationship',
-      text: 'Klik satu kali garis Relationship. Setelah Properties tampil, coba geser endpoint pada garis ke sisi lain Node (atas, kanan, bawah, atau kiri). Posisi endpoint mengikuti sisi yang Anda pilih. Setelah mencoba, tekan Next.',
+      title: '2. Try a Relationship',
+      text: 'Click a relationship line once to open Relationship Properties. You can move an endpoint to the top, right, bottom, or left side of a node. The relationship line uses orthogonal routing — no diagonal segments.',
       target: 'relationship'
     },
     {
       id: 'camera',
-      title: '3. Coba Camera',
-      text: 'Camera adalah posisi pandang yang disimpan. Klik menu Camera di toolbar atas, pilih “+ Save current” untuk menyimpan posisi pandangan sekarang, lalu pilih nama Camera tersebut untuk kembali ke posisi itu. Camera hanya mengubah sudut pandang/zoom, bukan data Node atau Relationship. Setelah mencoba, tekan Next.',
+      title: '3. Try Camera',
+      text: 'Camera saves a map viewpoint. Open Camera in the top toolbar, save the current view, then select the saved Camera to return to that zoom and position. Camera changes the viewport only; it does not change your nodes or relationships. When you understand it, press Next.',
       target: 'camera'
     },
     {
       id: 'printout',
-      title: '4. Coba Printout',
-      text: 'Buka Printout dari menu View. Di sini Universe yang sama dibaca sebagai hasil struktur/hierarchy untuk output. Coba pan atau zoom, lalu kembali ke canvas. Setelah selesai, tekan Finish demo.',
+      title: '4. Try Printout',
+      text: 'Open View → Printout to see the same business model as a structured output. Try pan or zoom, then return to the canvas. When finished, press Finish demo.',
       target: 'printout'
     }
   ],
-  completionTitle: 'Demo telah berakhir',
-  completionText: 'Untuk melanjutkan menggunakan Universe Mapper, silahkan sign in / login.',
-  completionAction: 'Sign in / Login'
+  completionTitle: 'Demo has ended',
+  completionText: 'To continue using Universe Mapper, please sign in / log in.',
+  completionAction: 'Sign in / Log in'
 }
 
-export const demoGuideStorageKey = 'um-guided-demo-v2'
+export const demoGuideStorageKey = 'um-guided-demo-v3'
