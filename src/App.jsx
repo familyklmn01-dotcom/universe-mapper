@@ -601,7 +601,7 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
       else {const kind=tool==='create-text'?'text':tool==='create-frame'?'frame':tool==='create-button'?'button':'shape',id=createId('annotation'),item={id,kind,shape:kind==='text'||kind==='frame'?'rectangle':'rounded',text:'',x:Math.max(0,finalBounds.x),y:Math.max(0,finalBounds.y),width:finalBounds.width,height:finalBounds.height,rotation:0,fontFamily:'Inter',fontSize:18,fontWeight:'600',italic:false,underline:false,align:'left',verticalAlign:'top',color:kind==='text'?'auto':kind==='button'?'#172033':'#edf2ff',fill:kind==='text'?'auto':kind==='frame'?'transparent':kind==='button'?'#6d8df5':'#263654',fillOpacity:1,stroke:'#7897f5',strokeWidth:kind==='frame'?2:kind==='button'?1:0,strokeStyle:kind==='frame'?'dashed':'solid',cornerRadius:kind==='frame'?0:10,autoFit:true,link:emptyLink(),entityType:kind,locked:false,visibility:'all',sceneId:null,zIndex:Math.max(0,...data.nodes.map(n=>Number(n.zIndex)||0),...(data.annotations||[]).map(a=>Number(a.zIndex)||0))+1,metadata:{entityType:kind}};commit(next=>{next.annotations=[...(next.annotations||[]),item];return next});onSelectObject?.({type:'annotation',id});setAnnotationDraft(item);setMode('select');if(kind==='text'||kind==='button')setTimeout(()=>setInlineAnnotation({...item,value:''}),0)}
       creationRef.current=null;setSelectionBox(null);return
     }
-    if(edgeEndpointRef.current){const d=edgeEndpointRef.current,draft=edgeEndpointDraft;if(d.moved){const finalPort=d.finalPort||draft?.port||d.initialPort;commit(next=>{if(d.id?.startsWith('contains-')){const child=next.nodes.find(item=>item.id===d.id.slice('contains-'.length));if(child)child.parentLinkStyle={...(child.parentLinkStyle||{}),[d.endpoint==='source'?'sourcePort':'targetPort']:finalPort}}else{const item=next.relationships.find(record=>record.id===d.id);if(item)item[d.endpoint==='source'?'sourcePort':'targetPort']=finalPort}return next})};edgeEndpointRef.current=null;setEdgeEndpointDraft(null)}else if(edgeDragRef.current){const d=edgeDragRef.current,draft=d.finalWaypoints?{id:d.id,waypoints:d.finalWaypoints}:routeDraftRef.current||routeDraft;if(d.moved&&draft)commit(next=>commitRelationshipRoute(next,draft.id,draft.waypoints));edgeDragRef.current=null;routeDraftRef.current=null;setRouteDraft(null)}else if(waypointRef.current){const d=waypointRef.current,draft=d.finalWaypoints?{id:d.id,waypoints:d.finalWaypoints}:routeDraftRef.current||routeDraft;if(draft)commit(next=>commitRelationshipRoute(next,draft.id,draft.waypoints));waypointRef.current=null;routeDraftRef.current=null;setRouteDraft(null)}else if(annotationDragRef.current||annotationResizeRef.current){const drag=annotationDragRef.current,draft=annotationDraft;const target=draft?.id?data.annotations?.find(item=>item.id===draft.id):null;if((annotationResizeRef.current||drag?.moved)&&draft)commit(next=>{const index=(next.annotations||[]).findIndex(item=>item.id===draft.id);if(index>=0)next.annotations[index]=draft;return next});annotationDragRef.current=null;annotationResizeRef.current=null;setAnnotationDraft(null)}else if(connectorRef.current){const p=point(event),sourceId=connectorRef.current.sourceId,target=shownNodes.find(n=>{if(n.id===sourceId)return false;const q=pos(n),s=size(n);return p.x>=q.x&&p.x<=q.x+s.width&&p.y>=q.y&&p.y<=q.y+s.height});if(target){setConnectionSource(sourceId);setConnectionTarget(target.id)}else notify({type:'info',text:'Drop the connector on another node to create a relationship.'});connectorRef.current=null;setConnectorDraft(null);setDropTarget(null)}else if(resizeRef.current){const id=resizeRef.current.id,s=draftSizes?.[id];if(s)commit(next=>{const node=next.nodes.find(n=>n.id===id);if(node)Object.assign(node,s);return next});resizeRef.current=null;setDraftSizes(null)}else if(dragRef.current){const d=dragRef.current;if(d.moved){const next=clone(liveData.current);next.nodes.forEach(n=>{const p=positionRef.current[n.id];if(p){n.x=p.x;n.y=p.y}});const movedIds=new Set(d.ids);next.relationships.forEach(edge=>{if(!movedIds.has(edge.sourceId)||!movedIds.has(edge.targetId)||!Array.isArray(edge.waypoints)||!edge.waypoints.length)return;const sourceBefore=next.nodes.find(n=>n.id===edge.sourceId),sourceOrigin=d.origins[edge.sourceId];if(!sourceBefore||!sourceOrigin)return;const delta={x:sourceBefore.x-sourceOrigin.x,y:sourceBefore.y-sourceOrigin.y};edge.waypoints=edge.waypoints.map(point=>({x:(Number(point.x)||0)+delta.x,y:(Number(point.y)||0)+delta.y}))});next.layout={...(next.layout||{}),preset:'manual',manualPositions:Object.fromEntries(next.nodes.map(n=>[n.id,{x:n.x,y:n.y}]))};commit(next);setDraftPositions(null)}else{onSelectObject?.({type:'node',id:d.id});onOpenProperties?.({type:'node',id:d.id})}dragRef.current=null}else if(selectRef.current){if(selectionBox){if(mode==='zoom-window'&&selectionBox.w>8&&selectionBox.h>8){const safeW=Math.max(1,selectionBox.w),safeH=Math.max(1,selectionBox.h),fit=Math.min(canvasSize.width/safeW,(canvasSize.height-8)/safeH),targetZoom=Math.min(6,Math.max(.2,fit*.9)),centerX=selectionBox.x+safeW/2,centerY=selectionBox.y+safeH/2;animateViewport({zoom:targetZoom,pan:{x:canvasSize.width/2-centerX*targetZoom,y:canvasSize.height/2-centerY*targetZoom}},560,()=>setMode('select'))}else{const ids=nodes.filter(n=>{const p=pos(n),s=size(n);return p.x+s.width>=selectionBox.x&&p.x<=selectionBox.x+selectionBox.w&&p.y+s.height>=selectionBox.y&&p.y<=selectionBox.y+selectionBox.h}).map(n=>n.id);const annotationIds=(data.annotations||[]).filter(a=>a.x+a.width>=selectionBox.x&&a.x<=selectionBox.x+selectionBox.w&&a.y+a.height>=selectionBox.y&&a.y<=selectionBox.y+selectionBox.h).map(a=>a.id);const additive=Boolean(selectRef.current?.add);const hasSelectionArea=selectionBox.w>8||selectionBox.h>8;if(!hasSelectionArea){selectRef.current=null;setSelectionBox(null);return}const mergedNodeIds=additive?[...new Set([...selectedIds,...ids])]:ids;const mergedAnnotationIds=additive?[...new Set([...selectedAnnotationIds,...annotationIds])]:annotationIds;setSelectedIds(mergedNodeIds);setSelectedAnnotationIds(mergedAnnotationIds);setSelectedId(mergedNodeIds.at(-1)||null);const lastAnnotation=mergedAnnotationIds.at(-1);const lastNode=mergedNodeIds.at(-1);if(lastAnnotation&&(!lastNode||lastAnnotation===annotationIds.at(-1))) {const target={type:'annotation',id:lastAnnotation};onSelectObject?.(target);onOpenProperties?.(target)}else if(lastNode){const target={type:'node',id:lastNode};onSelectObject?.(target);onOpenProperties?.(target)}}}selectRef.current=null;setSelectionBox(null)}panRef.current=null }
+    if(edgeEndpointRef.current){const d=edgeEndpointRef.current,draft=edgeEndpointDraft;if(d.moved){const finalPort=d.finalPort||draft?.port||d.initialPort;commit(next=>{if(d.id?.startsWith('contains-')){const child=next.nodes.find(item=>item.id===d.id.slice('contains-'.length));if(child)child.parentLinkStyle={...(child.parentLinkStyle||{}),[d.endpoint==='source'?'sourcePort':'targetPort']:finalPort}}else{const item=next.relationships.find(record=>record.id===d.id);if(item)item[d.endpoint==='source'?'sourcePort':'targetPort']=finalPort}return next})};edgeEndpointRef.current=null;setEdgeEndpointDraft(null)}else if(edgeDragRef.current){const d=edgeDragRef.current,draft=d.finalWaypoints?{id:d.id,waypoints:d.finalWaypoints}:routeDraftRef.current||routeDraft;if(d.moved&&draft)commit(next=>commitRelationshipRoute(next,draft.id,draft.waypoints));edgeDragRef.current=null;routeDraftRef.current=null;setRouteDraft(null)}else if(waypointRef.current){const d=waypointRef.current,draft=d.finalWaypoints?{id:d.id,waypoints:d.finalWaypoints}:routeDraftRef.current||routeDraft;if(draft)commit(next=>commitRelationshipRoute(next,draft.id,draft.waypoints));waypointRef.current=null;routeDraftRef.current=null;setRouteDraft(null)}else if(annotationDragRef.current||annotationResizeRef.current){const drag=annotationDragRef.current,draft=annotationDraft;const target=draft?.id?data.annotations?.find(item=>item.id===draft.id):null;if((annotationResizeRef.current||drag?.moved)&&draft)commit(next=>{const index=(next.annotations||[]).findIndex(item=>item.id===draft.id);if(index>=0)next.annotations[index]=draft;return next});annotationDragRef.current=null;annotationResizeRef.current=null;setAnnotationDraft(null)}else if(connectorRef.current){const p=point(event),sourceId=connectorRef.current.sourceId,target=shownNodes.find(n=>{if(n.id===sourceId)return false;const q=pos(n),s=size(n);return p.x>=q.x&&p.x<=q.x+s.width&&p.y>=q.y&&p.y<=q.y+s.height});if(target){setConnectionSource(sourceId);setConnectionTarget(target.id)}else notify({type:'info',text:'Drop the connector on another node to create a relationship.'});connectorRef.current=null;setConnectorDraft(null);setDropTarget(null)}else if(resizeRef.current){const id=resizeRef.current.id,s=draftSizes?.[id];if(s)commit(next=>{const node=next.nodes.find(n=>n.id===id);if(node)Object.assign(node,s);return next});resizeRef.current=null;setDraftSizes(null)}else if(dragRef.current){const d=dragRef.current;if(d.moved){const next=clone(liveData.current);next.nodes.forEach(n=>{const p=positionRef.current[n.id];if(p){n.x=p.x;n.y=p.y}});next.layout={...(next.layout||{}),preset:'manual',manualPositions:Object.fromEntries(next.nodes.map(n=>[n.id,{x:n.x,y:n.y}]))};commit(next);setDraftPositions(null)}else{onSelectObject?.({type:'node',id:d.id});onOpenProperties?.({type:'node',id:d.id})}dragRef.current=null}else if(selectRef.current){if(selectionBox){if(mode==='zoom-window'&&selectionBox.w>8&&selectionBox.h>8){const safeW=Math.max(1,selectionBox.w),safeH=Math.max(1,selectionBox.h),fit=Math.min(canvasSize.width/safeW,(canvasSize.height-8)/safeH),targetZoom=Math.min(6,Math.max(.2,fit*.9)),centerX=selectionBox.x+safeW/2,centerY=selectionBox.y+safeH/2;animateViewport({zoom:targetZoom,pan:{x:canvasSize.width/2-centerX*targetZoom,y:canvasSize.height/2-centerY*targetZoom}},560,()=>setMode('select'))}else{const ids=nodes.filter(n=>{const p=pos(n),s=size(n);return p.x+s.width>=selectionBox.x&&p.x<=selectionBox.x+selectionBox.w&&p.y+s.height>=selectionBox.y&&p.y<=selectionBox.y+selectionBox.h}).map(n=>n.id);const annotationIds=(data.annotations||[]).filter(a=>a.x+a.width>=selectionBox.x&&a.x<=selectionBox.x+selectionBox.w&&a.y+a.height>=selectionBox.y&&a.y<=selectionBox.y+selectionBox.h).map(a=>a.id);const additive=Boolean(selectRef.current?.add);const hasSelectionArea=selectionBox.w>8||selectionBox.h>8;if(!hasSelectionArea){selectRef.current=null;setSelectionBox(null);return}const mergedNodeIds=additive?[...new Set([...selectedIds,...ids])]:ids;const mergedAnnotationIds=additive?[...new Set([...selectedAnnotationIds,...annotationIds])]:annotationIds;setSelectedIds(mergedNodeIds);setSelectedAnnotationIds(mergedAnnotationIds);setSelectedId(mergedNodeIds.at(-1)||null);const lastAnnotation=mergedAnnotationIds.at(-1);const lastNode=mergedNodeIds.at(-1);if(lastAnnotation&&(!lastNode||lastAnnotation===annotationIds.at(-1))) {const target={type:'annotation',id:lastAnnotation};onSelectObject?.(target);onOpenProperties?.(target)}else if(lastNode){const target={type:'node',id:lastNode};onSelectObject?.(target);onOpenProperties?.(target)}}}selectRef.current=null;setSelectionBox(null)}panRef.current=null }
   const wheelRef=useRef({zoom,pan}); useEffect(()=>{wheelRef.current={zoom,pan}},[zoom,pan])
   useEffect(()=>{
     const editable=target=>{const tag=target?.tagName?.toLowerCase();return ['input','textarea','select'].includes(tag)||target?.isContentEditable||target?.closest?.('[contenteditable=\"true\"]')||target?.closest?.('.inline-node-name,.inline-annotation-text,.formula-editor')}
@@ -649,7 +649,144 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
   const contextAction=action=>{const id=contextMenu?.id;const isAnnotation=contextMenu?.type==='annotation';const isRelationship=contextMenu?.type==='relationship';const target=isAnnotation?(data.annotations||[]).find(a=>a.id===id):isRelationship?data.relationships.find(r=>r.id===id):data.nodes.find(n=>n.id===id);const ids=selectedIds.length?selectedIds:[id].filter(Boolean),annotationIds=selectedAnnotationIds.length?selectedAnnotationIds:(isAnnotation&&id?[id]:[]);if(action==='properties'&&id){onOpenProperties?.({type:isAnnotation?'annotation':isRelationship?'relationship':'node',id});setContextMenu(null);return}
   if(action==='hyperlink'&&id){onOpenProperties?.({type:isAnnotation?'annotation':isRelationship?'relationship':'node',id});setContextMenu(null);return}if(action==='edit'&&id){if(isRelationship){onOpenProperties?.({type:'relationship',id})}else if(isAnnotation){const item=target;if(item?.kind==='text'||item?.kind==='button')setInlineAnnotation({id:item.id,value:item.text||'',...item});else{setAnnotationDraft({...item});onOpenProperties?.({type:'annotation',id})}}else onProperties(id);setContextMenu(null);return}if(action==='connect'&&id){setConnectionSource(id);notify({type:'info',text:'Connection mode: click the target node. Press Esc to cancel.'})}if(action==='lock'&&target)commit(next=>{if(isRelationship){return next}else if(isAnnotation){const item=next.annotations.find(a=>a.id===id);if(item)item.locked=!item.locked}else next.nodes.filter(n=>ids.includes(n.id)).forEach(n=>{n.locked=!n.locked});return next});if(action==='duplicate'&&target)commit(next=>{if(isRelationship){next.relationships.push({...target,id:createId('rel'),waypoints:(target.waypoints||[]).map(p=>({...p,x:p.x+24,y:p.y+24}) )})}else{const max=Math.max(0,...next.nodes.map(n=>Number(n.zIndex)||0),...(next.annotations||[]).map(a=>Number(a.zIndex)||0));if(isAnnotation)next.annotations=[...(next.annotations||[]),{...target,id:createId('annotation'),x:target.x+24,y:target.y+24,zIndex:max+1}];else next.nodes.push({...target,id:createId('node'),name:`${target.name} Copy`,x:target.x+24,y:target.y+24,zIndex:max+1})}return next});if(['bring-front','send-back','bring-forward','send-backward'].includes(action)&&target&&!isRelationship){moveLayer(id,action==='bring-front'?'front':action==='send-back'?'back':action==='bring-forward'?'forward':'backward');setContextMenu(null);return}if(action==='reset-route'&&isRelationship){commit(next=>{if(id?.startsWith('contains-')){const child=next.nodes.find(item=>item.id===id.slice('contains-'.length));if(child)child.parentLinkStyle={...(child.parentLinkStyle||{}),manualRoute:false,waypoints:[]}}else{const item=next.relationships.find(r=>r.id===id);if(item){item.manualRoute=false;item.waypoints=[]}}return next});setContextMenu(null);return}if(action==='add-waypoint'&&isRelationship){setEdgeEditor(target);onOpenProperties?.({type:'relationship',id});setContextMenu(null);return}if(action==='delete'&&target){setContextMenu(null);if(isRelationship)setDeleteConfirm?.({count:1,name:target.type,target:{type:'relationship',id}});else if(isAnnotation)setDeleteConfirm?.({count:1,name:target.kind==='text'?'Free Text':target.kind==='frame'?'Frame':target.kind==='image'?'Image':'Shape',target:{type:'annotation',id}});else setDeleteConfirm?.({count:1,name:target.name,target:{type:'node',ids:[id]}});return}if(action.startsWith('align')||action.startsWith('distribute'))commit(next=>{const objects=[...next.nodes.filter(n=>ids.includes(n.id)),...(next.annotations||[]).filter(a=>annotationIds.includes(a.id))];if(objects.length<2)return next;if(action==='align-left'){const value=Math.min(...objects.map(o=>o.x));objects.forEach(o=>{o.x=value})}else if(action==='align-center'){const value=(Math.min(...objects.map(o=>o.x))+Math.max(...objects.map(o=>o.x+o.width)))/2;objects.forEach(o=>{o.x=value-o.width/2})}else if(action==='align-right'){const value=Math.max(...objects.map(o=>o.x+o.width));objects.forEach(o=>{o.x=value-o.width})}else if(action==='align-top'){const value=Math.min(...objects.map(o=>o.y));objects.forEach(o=>{o.y=value})}else if(action==='align-middle'){const value=(Math.min(...objects.map(o=>o.y))+Math.max(...objects.map(o=>o.y+o.height)))/2;objects.forEach(o=>{o.y=value-o.height/2})}else if(action==='align-bottom'){const value=Math.max(...objects.map(o=>o.y+o.height));objects.forEach(o=>{o.y=value-o.height})}else if(action==='distribute-horizontal'){const sorted=[...objects].sort((a,b)=>a.x-b.x),first=sorted[0],last=sorted.at(-1),span=(last.x+last.width)-first.x,totalWidth=sorted.reduce((sum,o)=>sum+o.width,0),gap=(span-totalWidth)/(sorted.length-1);let cursor=first.x;sorted.forEach(o=>{o.x=cursor;cursor+=o.width+gap})}else if(action==='distribute-vertical'){const sorted=[...objects].sort((a,b)=>a.y-b.y),first=sorted[0],last=sorted.at(-1),span=(last.y+last.height)-first.y,totalHeight=sorted.reduce((sum,o)=>sum+o.height,0),gap=(span-totalHeight)/(sorted.length-1);let cursor=first.y;sorted.forEach(o=>{o.y=cursor;cursor+=o.height+gap})}return next});setContextMenu(null)}
   const edgePortSide=(edge,node,isSource)=>{const draft=edgeEndpointDraft?.id===edge.id&&edgeEndpointDraft.endpoint===(isSource?'source':'target')?edgeEndpointDraft.port:null;const stored=isSource?edge.sourcePort:edge.targetPort;if(draft&&['top','right','bottom','left'].includes(draft))return draft;if(['top','right','bottom','left'].includes(stored))return stored;const otherId=isSource?edge.targetId:edge.sourceId,other=data.nodes.find(item=>item.id===otherId),p=pos(node),s=size(node);if(!other)return isSource?'right':'left';const op=pos(other),os=size(other),dx=(op.x+os.width/2)-(p.x+s.width/2),dy=(op.y+os.height/2)-(p.y+s.height/2);if(Math.abs(dx)>=Math.abs(dy))return isSource?(dx>=0?'right':'left'):(dx>=0?'left':'right');return isSource?(dy>=0?'bottom':'top'):(dy>=0?'top':'bottom')}
-  const edgeGeometry=(edge,a,b,waypointsOverride)=>{const as=size(a),bs=size(b),sourceSide=edgePortSide(edge,a,true),targetSide=edgePortSide(edge,b,false),sp=portPoint(a,sourceSide),tp=portPoint(b,targetSide),sx=sp.x,sy=sp.y,tx=tp.x,ty=tp.y,ac={x:a.x+as.width/2,y:a.y+as.height/2},bc={x:b.x+bs.width/2,y:b.y+bs.height/2},horizontal=Math.abs(bc.x-ac.x)>=Math.abs(bc.y-ac.y),m=horizontal?(sx+tx)/2:(sy+ty)/2,baseWaypoints=waypointsOverride??(routeDraft?.id===edge.id?routeDraft.waypoints:edge.waypoints),movingIds=dragRef.current?.ids||[],moveTogether=movingIds.includes(edge.sourceId)&&movingIds.includes(edge.targetId),committedSource=data.nodes.find(item=>item.id===edge.sourceId),moveDelta=moveTogether&&committedSource?{x:a.x-committedSource.x,y:a.y-committedSource.y}:{x:0,y:0},waypoints=baseWaypoints?.length&&moveTogether?baseWaypoints.map(item=>({x:(Number(item.x)||0)+moveDelta.x,y:(Number(item.y)||0)+moveDelta.y})):baseWaypoints;if(waypoints?.length){const rawPoints=[{x:sx,y:sy},...waypoints,{x:tx,y:ty}],points=[rawPoints[0]];for(let i=1;i<rawPoints.length;i++){const prev=points[points.length-1],next=rawPoints[i];if(Math.abs(next.x-prev.x)>0.5&&Math.abs(next.y-prev.y)>0.5){const corner=Math.abs(next.x-prev.x)>=Math.abs(next.y-prev.y)?{x:next.x,y:prev.y}:{x:prev.x,y:next.y};points.push(corner)}points.push(next)}const mid=points[Math.floor(points.length/2)];return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide}}const points=horizontal?[{x:sx,y:sy},{x:m,y:sy},{x:m,y:ty},{x:tx,y:ty}]:[{x:sx,y:sy},{x:sx,y:m},{x:tx,y:m},{x:tx,y:ty}];const d=horizontal?`M${sx},${sy} H${m} V${ty} H${tx}`:`M${sx},${sy} V${m} H${tx} V${ty}`;return{d,lx:(sx+tx)/2,ly:(sy+ty)/2-8,waypoints:[],points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide}}
+  const edgeGeometry=(edge,a,b,waypointsOverride)=>{
+    const as=size(a),bs=size(b);
+    const validSide=value=>['top','right','bottom','left'].includes(value);
+    const sourceExplicit=validSide(edge.sourcePort),targetExplicit=validSide(edge.targetPort);
+    let sourceSide=edgePortSide(edge,a,true),targetSide=edgePortSide(edge,b,false);
+    let sp=portPoint(a,sourceSide),tp=portPoint(b,targetSide);
+    const ac={x:a.x+as.width/2,y:a.y+as.height/2},bc={x:b.x+bs.width/2,y:b.y+bs.height/2};
+    const waypoints=waypointsOverride??(routeDraft?.id===edge.id?routeDraft.waypoints:edge.waypoints);
+    const sideAxis=side=>['left','right'].includes(side)?'horizontal':'vertical';
+    const sideVector=side=>side==='left'?{x:-1,y:0}:side==='right'?{x:1,y:0}:side==='top'?{x:0,y:-1}:{x:0,y:1};
+    const direction=(from,to)=>{const dx=to.x-from.x,dy=to.y-from.y;if(Math.abs(dx)>=Math.abs(dy))return dx>=0?'right':'left';return dy>=0?'bottom':'top'};
+    const samePoint=(p,q)=>Math.abs(p.x-q.x)<=0.5&&Math.abs(p.y-q.y)<=0.5;
+    const oppositeSide=side=>side==='left'?'right':side==='right'?'left':side==='top'?'bottom':'top';
+    const validSegment=(from,to,requiredSide)=>!samePoint(from,to)&&direction(from,to)===requiredSide;
+    const makeL=(ss,ts)=>{
+      const s=portPoint(a,ss),t=portPoint(b,ts),candidates=[{x:t.x,y:s.y},{x:s.x,y:t.y}];
+      return candidates.map(corner=>({corner,points:[s,corner,t],sourceSide:ss,targetSide:ts}))
+        .filter(candidate=>validSegment(candidate.points[0],candidate.points[1],ss)&&validSegment(candidate.points[1],candidate.points[2],oppositeSide(ts)));
+    };
+    const scoreL=candidate=>{const [p0,p1,p2]=candidate.points;return Math.hypot(p1.x-p0.x,p1.y-p0.y)+Math.hypot(p2.x-p1.x,p2.y-p1.y)};
+
+    // Automatic routing chooses topology first: straight -> one-bend L/N ->
+    // two-bend Z only when a clean one-bend route cannot satisfy the ports.
+    // The important distinction is that an automatic relationship is not born
+    // with a forced right/left or top/bottom pair.  Its ports follow the actual
+    // relative position of the nodes, which lets common diagonal layouts use a
+    // clean N/L shape instead of an unnecessary Z.
+    if(!waypoints?.length && (!sourceExplicit||!targetExplicit)){
+      const sourceSides=sourceExplicit?[edge.sourcePort]:['top','right','bottom','left'];
+      const targetSides=targetExplicit?[edge.targetPort]:['top','right','bottom','left'];
+      const dx=bc.x-ac.x,dy=bc.y-ac.y;
+      const absDx=Math.abs(dx),absDy=Math.abs(dy);
+      const naturalSource=absDx>=absDy?(dx>=0?'right':'left'):(dy>=0?'bottom':'top');
+      const naturalTarget=absDx>=absDy?(dx>=0?'left':'right'):(dy>=0?'top':'bottom');
+      const candidates=[];
+      for(const ss of sourceSides){
+        for(const ts of targetSides){
+          const s=portPoint(a,ss),t=portPoint(b,ts);
+          const straight=sideAxis(ss)===sideAxis(ts)&&
+            ((sideAxis(ss)==='horizontal'&&Math.abs(s.y-t.y)<=0.5&&((ss==='right'&&ts==='left'&&t.x>s.x)||(ss==='left'&&ts==='right'&&t.x<s.x)))||
+             (sideAxis(ss)==='vertical'&&Math.abs(s.x-t.x)<=0.5&&((ss==='bottom'&&ts==='top'&&t.y>s.y)||(ss==='top'&&ts==='bottom'&&t.y<s.y))));
+          const l=makeL(ss,ts);
+          if(straight){
+            candidates.push({ss,ts,kind:0,points:[s,t],naturalPenalty:(ss===naturalSource?0:1)+(ts===naturalTarget?0:1)});
+          }else if(l.length){
+            const bestL=l.sort((x,y)=>scoreL(x)-scoreL(y))[0];
+            // Prefer a one-bend route whose source/target ports point toward
+            // the other node.  Length is only a secondary tie breaker; this
+            // prevents a tiny but visually awkward stub from winning.
+            const sourcePenalty=ss===naturalSource?0:1;
+            const targetPenalty=ts===naturalTarget?0:1;
+            const length=scoreL(bestL);
+            const bend=bestL.points[1];
+            const stubA=Math.hypot(bend.x-s.x,bend.y-s.y);
+            const stubB=Math.hypot(t.x-bend.x,t.y-bend.y);
+            const stubPenalty=Math.min(stubA,stubB)<18?2:0;
+            candidates.push({ss,ts,kind:1,points:bestL.points,naturalPenalty:sourcePenalty+targetPenalty+stubPenalty,length});
+          }
+        }
+      }
+      const best=candidates.sort((x,y)=>x.kind-y.kind || x.naturalPenalty-y.naturalPenalty || x.length-y.length)[0];
+      if(best){sourceSide=best.ss;targetSide=best.ts;sp=best.points[0];tp=best.points.at(-1)}
+    }
+
+    const sourceAxis=sideAxis(sourceSide),targetAxis=sideAxis(targetSide);
+    const straightAllowed=sourceAxis===targetAxis &&
+      ((sourceAxis==='horizontal'&&Math.abs(sp.y-tp.y)<=0.5&&((sourceSide==='right'&&targetSide==='left'&&tp.x>sp.x)||(sourceSide==='left'&&targetSide==='right'&&tp.x<sp.x)))||
+       (sourceAxis==='vertical'&&Math.abs(sp.x-tp.x)<=0.5&&((sourceSide==='bottom'&&targetSide==='top'&&tp.y>sp.y)||(sourceSide==='top'&&targetSide==='bottom'&&tp.y<sp.y))));
+
+    let autoPoints;
+    const lCandidates=makeL(sourceSide,targetSide);
+    if(straightAllowed) autoPoints=[sp,tp];
+    else if(lCandidates.length) autoPoints=[...lCandidates.sort((x,y)=>scoreL(x)-scoreL(y))[0].points];
+    else {
+      // Both endpoint stubs are sacred: the first segment must leave the source
+      // perpendicular to its selected side, and the last segment must enter the
+      // target perpendicular to its selected side. When one L turn cannot satisfy
+      // both constraints, use the shortest two-turn orthogonal route between stubs.
+      const gap=24;
+      const sv=sideVector(sourceSide),tv=sideVector(targetSide);
+      const ss={x:sp.x+sv.x*gap,y:sp.y+sv.y*gap},tt={x:tp.x+tv.x*gap,y:tp.y+tv.y*gap};
+      const candidates=[];
+      const push=(points)=>{
+        const clean=points.filter((p,i)=>i===0||!samePoint(p,points[i-1]));
+        if(clean.length<2)return;
+        if(direction(clean[0],clean[1])!==sourceSide||direction(clean.at(-2),clean.at(-1))!==oppositeSide(targetSide))return;
+        for(let i=1;i<clean.length-1;i++){
+          const a0=clean[i-1],a1=clean[i],a2=clean[i+1];
+          if(Math.abs(a1.x-a0.x)>0.5&&Math.abs(a1.y-a0.y)>0.5)return;
+          if(Math.abs(a2.x-a1.x)>0.5&&Math.abs(a2.y-a1.y)>0.5)return;
+        }
+        const length=clean.slice(0,-1).reduce((sum,p,i)=>sum+Math.hypot(clean[i+1].x-p.x,clean[i+1].y-p.y),0);
+        candidates.push({points:clean,length});
+      };
+      // Horizontal/vertical bridge candidates. These are deliberately evaluated
+      // against the actual source/target side directions, so an inverted-Z/N route
+      // is chosen only when the selected ports require it.
+      push([sp,ss,{x:tt.x,y:ss.y},tt,tp]);
+      push([sp,ss,{x:ss.x,y:tt.y},tt,tp]);
+      push([sp,{x:ss.x,y:tt.y},tt,tp]);
+      push([sp,{x:tt.x,y:ss.y},tt,tp]);
+      const best=candidates.sort((x,y)=>x.length-y.length)[0];
+      if(best) autoPoints=best.points;
+      else {
+        // Guaranteed orthogonal fallback: never connect source and target directly
+        // when their coordinates differ. Keep the source/target port stubs sacred.
+        const x=ss.x, y=tt.y;
+        const fallback=[sp,ss,{x,y},tt,tp];
+        autoPoints=fallback.filter((p,i)=>i===0||!samePoint(p,fallback[i-1]));
+      }
+    }
+
+    if(waypoints?.length){
+      // A single stored waypoint is treated as the user's intended L corner only
+      // when that corner still respects both endpoint port directions. Otherwise
+      // retain the endpoint-perpendicular invariant and orthogonalize around it.
+      if(waypoints.length===1){
+        const wp=waypoints[0],validL=lCandidates.filter(item=>Math.hypot(item.corner.x-wp.x,item.corner.y-wp.y)<=Math.max(24,Math.hypot(sp.x-tp.x,sp.y-tp.y)));
+        if(validL.length){
+          const best=validL.sort((x,y)=>Math.hypot(x.corner.x-wp.x,x.corner.y-wp.y)-Math.hypot(y.corner.x-wp.x,y.corner.y-wp.y))[0],points=best.points,mid=points[1];
+          return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
+        }
+      }
+      const rawPoints=[sp,...waypoints,tp],points=[rawPoints[0]];
+      for(let i=1;i<rawPoints.length;i++){
+        const prev=points[points.length-1],next=rawPoints[i];
+        if(Math.abs(next.x-prev.x)>0.5&&Math.abs(next.y-prev.y)>0.5){
+          const corner=Math.abs(next.x-prev.x)>=Math.abs(next.y-prev.y)?{x:next.x,y:prev.y}:{x:prev.x,y:next.y};
+          points.push(corner);
+        }
+        points.push(next);
+      }
+      const mid=points[Math.floor(points.length/2)];
+      return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
+    }
+    const points=autoPoints,d=pathThrough(points),mid=points[Math.floor(points.length/2)];
+    return{d,lx:mid.x,ly:mid.y-8,waypoints:[],points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
+  }
   const edgePath=(edge,a,b)=>edgeGeometry(edge,a,b)
   const edgeSegmentAt=(edge,a,b,p)=>{if(edge.type==='contains'||edge.id.startsWith('formula-'))return null;const geometry=edgeGeometry(edge,a,b),points=geometry.points||[];let best=null;for(let index=1;index<points.length-2;index++){const a=points[index],b=points[index+1],horizontal=Math.abs(b.x-a.x)>=Math.abs(b.y-a.y),distance=horizontal?Math.abs(p.y-a.y):Math.abs(p.x-a.x),minX=Math.min(a.x,b.x)-12,maxX=Math.max(a.x,b.x)+12,minY=Math.min(a.y,b.y)-12,maxY=Math.max(a.y,b.y)+12;if(p.x<minX||p.x>maxX||p.y<minY||p.y>maxY||distance>12)continue;best={segmentIndex:index,horizontal,axis:horizontal?'y':'x',points,distance};break}return best}
   const segmentWaypoints=(geometry,segmentIndex,value)=>{const points=geometry.points||[],waypoints=points.slice(1,-1).map(item=>({...item})),a=points[segmentIndex],b=points[segmentIndex+1];if(!a||!b)return waypoints;const horizontal=Math.abs(b.x-a.x)>=Math.abs(b.y-a.y);const first=segmentIndex-1,second=segmentIndex;if(horizontal){if(waypoints[first])waypoints[first].y=value;if(waypoints[second])waypoints[second].y=value}else{if(waypoints[first])waypoints[first].x=value;if(waypoints[second])waypoints[second].x=value}return waypoints}
