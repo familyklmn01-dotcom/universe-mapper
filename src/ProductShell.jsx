@@ -45,16 +45,11 @@ export default function ProductShell(){
   const openProject=async project=>{setSyncStatus('');let data=loadProjectData(project.id);if(project.source==='cloud')try{setSyncStatus('Loading cloud');const {db,firestoreSdk}=await getFirebaseServices(),snapshot=await firestoreSdk.getDoc(firestoreSdk.doc(db,'universes',project.id));if(snapshot.exists()&&snapshot.data().data)data=normalizeData(snapshot.data().data);saveProjectData(project.id,data);setSyncStatus('Cloud ready')}catch(error){setSyncStatus('Local fallback');setMessage(friendlyError(error))}lastQueuedSignature.current=JSON.stringify(data);setActiveProject(project);setEditorData(data);setScreen('editor')}
   const syncCloud=useCallback(data=>{if(!activeProject||activeProject.source!=='cloud'||!user||activeProject.role==='Viewer')return;const signature=JSON.stringify(data);if(signature===lastQueuedSignature.current&&!pendingCloudWrite.current)return;lastQueuedSignature.current=signature;pendingCloudWrite.current={signature};clearTimeout(syncTimer.current);setSyncStatus('Unsaved changes');syncTimer.current=setTimeout(()=>{const writeSignature=signature;setSyncStatus('Saving');getFirebaseServices().then(async({db,firestoreSdk})=>{await firestoreSdk.updateDoc(firestoreSdk.doc(db,'universes',activeProject.id),{data,updatedAt:firestoreSdk.serverTimestamp()});for(const presentation of data.presentations||[]){const {scenes,...record}=presentation,presentationRef=firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id);await firestoreSdk.setDoc(presentationRef,{...record,ownerId:user.uid,sceneCount:scenes.length,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});for(const scene of scenes)await firestoreSdk.setDoc(firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id,'scenes',scene.id),scene,{merge:true})}}).then(()=>{if(pendingCloudWrite.current?.signature===writeSignature)setSyncStatus('Saving');else setSyncStatus('Unsaved changes')}).catch(()=>{if(pendingCloudWrite.current?.signature===writeSignature)pendingCloudWrite.current=null;lastQueuedSignature.current='';setSyncStatus('Save failed')})},1200)},[activeProject,user])
   if(loading)return <div className="shell-loading"><UniverseLogo className="loading-logo"/><p>Loading Universe Mapper…</p></div>
-  const onDemoSelect=target=>{
-    if(!user?.demo||demoComplete)return;
-    const step=demoGuide.steps[demoStep];
-    if(step?.target==='node'&&target?.type==='node'){setDemoStep(1);return}
-    if(step?.target==='relationship'&&target?.type==='relationship'){setDemoStep(2)}
-  }
+  const onDemoSelect=()=>{}
   const finishDemo=()=>{setDemoComplete(true);storageSet(demoGuideStorageKey,'completed')}
   const nextDemoStep=()=>{if(demoStep>=demoGuide.steps.length-1){finishDemo();return}setDemoStep(value=>Math.min(value+1,demoGuide.steps.length-1))}
   const loginFromDemo=()=>{setDemoComplete(false);setUser(null);setActiveProject(null);setEditorData(null);setScreen('signin')}
-  if(screen==='editor')return <><EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} demoMode={Boolean(user?.demo)} syncStatus={syncStatus} onDataChange={syncCloud} onDemoSelect={onDemoSelect} onExit={()=>setScreen('projects')}/>{user?.demo&&!demoComplete&&<GuidedDemoOverlay step={demoGuide.steps[demoStep]} stepIndex={demoStep} total={demoGuide.steps.length} onNext={nextDemoStep} onSkip={finishDemo}/>} {user?.demo&&demoComplete&&<DemoCompleteOverlay title={demoGuide.completionTitle} text={demoGuide.completionText} action={demoGuide.completionAction} onLogin={loginFromDemo} onReplay={()=>{setDemoComplete(false);setDemoStep(0)}}/>}</>
+  if(screen==='editor')return <><EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} demoMode={Boolean(user?.demo)} syncStatus={syncStatus} onDataChange={syncCloud} onDemoSelect={onDemoSelect} onExit={()=>setScreen('projects')}/>{user?.demo&&!demoComplete&&<GuidedDemoOverlay step={demoGuide.steps[demoStep]} stepIndex={demoStep} total={demoGuide.steps.length} onNext={nextDemoStep}/>} {user?.demo&&demoComplete&&<DemoCompleteOverlay title={demoGuide.completionTitle} text={demoGuide.completionText} action={demoGuide.completionAction} onLogin={loginFromDemo} onReplay={()=>{setDemoComplete(false);setDemoStep(0)}}/>}</>
   if(screen==='projects')return <ProjectManager user={user} onOpen={openProject} onProfile={()=>setScreen('profile')} onLogout={logout}/>
   if(screen==='profile')return <Profile user={user} activeProject={activeProject} onContinue={()=>setScreen(activeProject?'editor':'projects')} onProjects={()=>setScreen('projects')} onLogout={logout}/>
   if(screen==='verify')return <Verification user={user} message={message} busy={busy} onResend={resend} onRefresh={()=>run(async()=>{await user.reload();if(user.emailVerified)setScreen('projects');else setMessage('Email is not verified yet.')})} onLogout={logout}/>
@@ -83,15 +78,14 @@ export default function ProductShell(){
 }
 
 
-function GuidedDemoOverlay({step,stepIndex,total,onNext,onSkip}){
+function GuidedDemoOverlay({step,stepIndex,total,onNext}){
   if(!step)return null
-  return <div style={{position:'fixed',left:24,bottom:24,width:360,maxWidth:'calc(100vw - 48px)',zIndex:1200,padding:'18px 18px 16px',border:'1px solid rgba(120,151,245,.35)',borderRadius:16,background:'rgba(12,18,31,.96)',boxShadow:'0 18px 50px rgba(0,0,0,.35)',color:'#eef3ff'}}>
-    <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.62,marginBottom:7}}>Guided Demo · {stepIndex+1}/{total}</div>
-    <strong style={{display:'block',fontSize:17,marginBottom:7}}>{step.title}</strong>
-    <p style={{margin:'0 0 14px',lineHeight:1.5,fontSize:13,color:'#c8d1e5'}}>{step.text}</p>
-    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-      <button onClick={onSkip} style={{border:0,background:'transparent',color:'#aeb9ce',padding:'8px 10px',cursor:'pointer'}}>Skip</button>
-      {!step.autoAdvance&&<button onClick={onNext} style={{border:'1px solid #7897f5',background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:9,padding:'8px 13px',cursor:'pointer'}}>{stepIndex===total-1?'Finish demo':'I tried it'}</button>}
+  return <div style={{position:'fixed',left:88,bottom:28,width:420,maxWidth:'calc(100vw - 120px)',zIndex:1200,padding:'20px 22px 18px',border:'1px solid rgba(255,255,255,.22)',borderRadius:16,background:'rgba(9,15,27,.97)',boxShadow:'0 20px 55px rgba(0,0,0,.42)',color:'#fff'}}>
+    <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.78,marginBottom:8}}>Guided Demo · {stepIndex+1}/{total}</div>
+    <strong style={{display:'block',fontSize:18,marginBottom:8,color:'#fff'}}>{step.title}</strong>
+    <p style={{margin:'0 0 16px',lineHeight:1.58,fontSize:14,color:'#fff'}}>{step.text}</p>
+    <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <button onClick={onNext} style={{border:'1px solid #7897f5',background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:9,padding:'9px 16px',cursor:'pointer'}}>{stepIndex===total-1?'Finish demo':'Next'}</button>
     </div>
   </div>
 }
