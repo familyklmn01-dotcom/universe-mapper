@@ -6,7 +6,7 @@ export const demoGuide = {
     {
       id: 'select-node',
       title: '1. Select a Node',
-      text: 'Click the Customer node once. The Inspector on the right shows its Properties without moving the canvas. You can inspect the fields, then press Next.',
+      text: 'Click the Business Operations node once. The Inspector on the right shows its Properties without moving the canvas. Notice that Marketing, Product, and Sales are children, while their lower nodes form the next hierarchy level. You can inspect the fields, then press Next.',
       target: 'node'
     },
     {
