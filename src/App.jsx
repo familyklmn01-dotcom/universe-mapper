@@ -661,11 +661,12 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
     const sideVector=side=>side==='left'?{x:-1,y:0}:side==='right'?{x:1,y:0}:side==='top'?{x:0,y:-1}:{x:0,y:1};
     const direction=(from,to)=>{const dx=to.x-from.x,dy=to.y-from.y;if(Math.abs(dx)>=Math.abs(dy))return dx>=0?'right':'left';return dy>=0?'bottom':'top'};
     const samePoint=(p,q)=>Math.abs(p.x-q.x)<=0.5&&Math.abs(p.y-q.y)<=0.5;
+    const oppositeSide=side=>side==='left'?'right':side==='right'?'left':side==='top'?'bottom':'top';
     const validSegment=(from,to,requiredSide)=>!samePoint(from,to)&&direction(from,to)===requiredSide;
     const makeL=(ss,ts)=>{
       const s=portPoint(a,ss),t=portPoint(b,ts),candidates=[{x:t.x,y:s.y},{x:s.x,y:t.y}];
       return candidates.map(corner=>({corner,points:[s,corner,t],sourceSide:ss,targetSide:ts}))
-        .filter(candidate=>validSegment(candidate.points[0],candidate.points[1],ss)&&validSegment(candidate.points[1],candidate.points[2],ts));
+        .filter(candidate=>validSegment(candidate.points[0],candidate.points[1],ss)&&validSegment(candidate.points[1],candidate.points[2],oppositeSide(ts)));
     };
     const scoreL=candidate=>{const [p0,p1,p2]=candidate.points;return Math.hypot(p1.x-p0.x,p1.y-p0.y)+Math.hypot(p2.x-p1.x,p2.y-p1.y)};
 
@@ -712,7 +713,7 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
       const push=(points)=>{
         const clean=points.filter((p,i)=>i===0||!samePoint(p,points[i-1]));
         if(clean.length<2)return;
-        if(direction(clean[0],clean[1])!==sourceSide||direction(clean.at(-2),clean.at(-1))!==targetSide)return;
+        if(direction(clean[0],clean[1])!==sourceSide||direction(clean.at(-2),clean.at(-1))!==oppositeSide(targetSide))return;
         for(let i=1;i<clean.length-1;i++){
           const a0=clean[i-1],a1=clean[i],a2=clean[i+1];
           if(Math.abs(a1.x-a0.x)>0.5&&Math.abs(a1.y-a0.y)>0.5)return;
@@ -729,7 +730,14 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
       push([sp,{x:ss.x,y:tt.y},tt,tp]);
       push([sp,{x:tt.x,y:ss.y},tt,tp]);
       const best=candidates.sort((x,y)=>x.length-y.length)[0];
-      autoPoints=best?.points||[sp,tp];
+      if(best) autoPoints=best.points;
+      else {
+        // Guaranteed orthogonal fallback: never connect source and target directly
+        // when their coordinates differ. Keep the source/target port stubs sacred.
+        const x=ss.x, y=tt.y;
+        const fallback=[sp,ss,{x,y},tt,tp];
+        autoPoints=fallback.filter((p,i)=>i===0||!samePoint(p,fallback[i-1]));
+      }
     }
 
     if(waypoints?.length){
