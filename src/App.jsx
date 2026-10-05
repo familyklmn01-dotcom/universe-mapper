@@ -649,19 +649,92 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
   const contextAction=action=>{const id=contextMenu?.id;const isAnnotation=contextMenu?.type==='annotation';const isRelationship=contextMenu?.type==='relationship';const target=isAnnotation?(data.annotations||[]).find(a=>a.id===id):isRelationship?data.relationships.find(r=>r.id===id):data.nodes.find(n=>n.id===id);const ids=selectedIds.length?selectedIds:[id].filter(Boolean),annotationIds=selectedAnnotationIds.length?selectedAnnotationIds:(isAnnotation&&id?[id]:[]);if(action==='properties'&&id){onOpenProperties?.({type:isAnnotation?'annotation':isRelationship?'relationship':'node',id});setContextMenu(null);return}
   if(action==='hyperlink'&&id){onOpenProperties?.({type:isAnnotation?'annotation':isRelationship?'relationship':'node',id});setContextMenu(null);return}if(action==='edit'&&id){if(isRelationship){onOpenProperties?.({type:'relationship',id})}else if(isAnnotation){const item=target;if(item?.kind==='text'||item?.kind==='button')setInlineAnnotation({id:item.id,value:item.text||'',...item});else{setAnnotationDraft({...item});onOpenProperties?.({type:'annotation',id})}}else onProperties(id);setContextMenu(null);return}if(action==='connect'&&id){setConnectionSource(id);notify({type:'info',text:'Connection mode: click the target node. Press Esc to cancel.'})}if(action==='lock'&&target)commit(next=>{if(isRelationship){return next}else if(isAnnotation){const item=next.annotations.find(a=>a.id===id);if(item)item.locked=!item.locked}else next.nodes.filter(n=>ids.includes(n.id)).forEach(n=>{n.locked=!n.locked});return next});if(action==='duplicate'&&target)commit(next=>{if(isRelationship){next.relationships.push({...target,id:createId('rel'),waypoints:(target.waypoints||[]).map(p=>({...p,x:p.x+24,y:p.y+24}) )})}else{const max=Math.max(0,...next.nodes.map(n=>Number(n.zIndex)||0),...(next.annotations||[]).map(a=>Number(a.zIndex)||0));if(isAnnotation)next.annotations=[...(next.annotations||[]),{...target,id:createId('annotation'),x:target.x+24,y:target.y+24,zIndex:max+1}];else next.nodes.push({...target,id:createId('node'),name:`${target.name} Copy`,x:target.x+24,y:target.y+24,zIndex:max+1})}return next});if(['bring-front','send-back','bring-forward','send-backward'].includes(action)&&target&&!isRelationship){moveLayer(id,action==='bring-front'?'front':action==='send-back'?'back':action==='bring-forward'?'forward':'backward');setContextMenu(null);return}if(action==='reset-route'&&isRelationship){commit(next=>{if(id?.startsWith('contains-')){const child=next.nodes.find(item=>item.id===id.slice('contains-'.length));if(child)child.parentLinkStyle={...(child.parentLinkStyle||{}),manualRoute:false,waypoints:[]}}else{const item=next.relationships.find(r=>r.id===id);if(item){item.manualRoute=false;item.waypoints=[]}}return next});setContextMenu(null);return}if(action==='add-waypoint'&&isRelationship){setEdgeEditor(target);onOpenProperties?.({type:'relationship',id});setContextMenu(null);return}if(action==='delete'&&target){setContextMenu(null);if(isRelationship)setDeleteConfirm?.({count:1,name:target.type,target:{type:'relationship',id}});else if(isAnnotation)setDeleteConfirm?.({count:1,name:target.kind==='text'?'Free Text':target.kind==='frame'?'Frame':target.kind==='image'?'Image':'Shape',target:{type:'annotation',id}});else setDeleteConfirm?.({count:1,name:target.name,target:{type:'node',ids:[id]}});return}if(action.startsWith('align')||action.startsWith('distribute'))commit(next=>{const objects=[...next.nodes.filter(n=>ids.includes(n.id)),...(next.annotations||[]).filter(a=>annotationIds.includes(a.id))];if(objects.length<2)return next;if(action==='align-left'){const value=Math.min(...objects.map(o=>o.x));objects.forEach(o=>{o.x=value})}else if(action==='align-center'){const value=(Math.min(...objects.map(o=>o.x))+Math.max(...objects.map(o=>o.x+o.width)))/2;objects.forEach(o=>{o.x=value-o.width/2})}else if(action==='align-right'){const value=Math.max(...objects.map(o=>o.x+o.width));objects.forEach(o=>{o.x=value-o.width})}else if(action==='align-top'){const value=Math.min(...objects.map(o=>o.y));objects.forEach(o=>{o.y=value})}else if(action==='align-middle'){const value=(Math.min(...objects.map(o=>o.y))+Math.max(...objects.map(o=>o.y+o.height)))/2;objects.forEach(o=>{o.y=value-o.height/2})}else if(action==='align-bottom'){const value=Math.max(...objects.map(o=>o.y+o.height));objects.forEach(o=>{o.y=value-o.height})}else if(action==='distribute-horizontal'){const sorted=[...objects].sort((a,b)=>a.x-b.x),first=sorted[0],last=sorted.at(-1),span=(last.x+last.width)-first.x,totalWidth=sorted.reduce((sum,o)=>sum+o.width,0),gap=(span-totalWidth)/(sorted.length-1);let cursor=first.x;sorted.forEach(o=>{o.x=cursor;cursor+=o.width+gap})}else if(action==='distribute-vertical'){const sorted=[...objects].sort((a,b)=>a.y-b.y),first=sorted[0],last=sorted.at(-1),span=(last.y+last.height)-first.y,totalHeight=sorted.reduce((sum,o)=>sum+o.height,0),gap=(span-totalHeight)/(sorted.length-1);let cursor=first.y;sorted.forEach(o=>{o.y=cursor;cursor+=o.height+gap})}return next});setContextMenu(null)}
   const edgePortSide=(edge,node,isSource)=>{const draft=edgeEndpointDraft?.id===edge.id&&edgeEndpointDraft.endpoint===(isSource?'source':'target')?edgeEndpointDraft.port:null;const stored=isSource?edge.sourcePort:edge.targetPort;if(draft&&['top','right','bottom','left'].includes(draft))return draft;if(['top','right','bottom','left'].includes(stored))return stored;const otherId=isSource?edge.targetId:edge.sourceId,other=data.nodes.find(item=>item.id===otherId),p=pos(node),s=size(node);if(!other)return isSource?'right':'left';const op=pos(other),os=size(other),dx=(op.x+os.width/2)-(p.x+s.width/2),dy=(op.y+os.height/2)-(p.y+s.height/2);if(Math.abs(dx)>=Math.abs(dy))return isSource?(dx>=0?'right':'left'):(dx>=0?'left':'right');return isSource?(dy>=0?'bottom':'top'):(dy>=0?'top':'bottom')}
-  const edgeGeometry=(edge,a,b,waypointsOverride)=>{const as=size(a),bs=size(b),sourceSide=edgePortSide(edge,a,true),targetSide=edgePortSide(edge,b,false),sp=portPoint(a,sourceSide),tp=portPoint(b,targetSide),sx=sp.x,sy=sp.y,tx=tp.x,ty=tp.y,ac={x:a.x+as.width/2,y:a.y+as.height/2},bc={x:b.x+bs.width/2,y:b.y+bs.height/2},waypoints=waypointsOverride??(routeDraft?.id===edge.id?routeDraft.waypoints:edge.waypoints);
-    // Automatic routing is intentionally orthogonal. Prefer a straight segment when the
-    // selected ports are naturally aligned, then prefer a single L turn. Only fall back
-    // to the existing two-turn route when the selected ports require it.
+  const edgeGeometry=(edge,a,b,waypointsOverride)=>{
+    const as=size(a),bs=size(b);
+    const validSide=value=>['top','right','bottom','left'].includes(value);
+    const sourceExplicit=validSide(edge.sourcePort);
+    const targetExplicit=validSide(edge.targetPort);
+    let sourceSide=edgePortSide(edge,a,true),targetSide=edgePortSide(edge,b,false);
+    let sp=portPoint(a,sourceSide),tp=portPoint(b,targetSide);
+    const ac={x:a.x+as.width/2,y:a.y+as.height/2},bc={x:b.x+bs.width/2,y:b.y+bs.height/2};
+    const waypoints=waypointsOverride??(routeDraft?.id===edge.id?routeDraft.waypoints:edge.waypoints);
     const direction=(from,to)=>{const dx=to.x-from.x,dy=to.y-from.y;if(Math.abs(dx)>=Math.abs(dy))return dx>=0?'right':'left';return dy>=0?'bottom':'top'};
-    const sourceAxis=['left','right'].includes(sourceSide)?'horizontal':'vertical',targetAxis=['left','right'].includes(targetSide)?'horizontal':'vertical';
-    const straightAligned=(sourceAxis==='horizontal'&&targetAxis==='horizontal'&&Math.abs(sy-ty)<=0.5)||(sourceAxis==='vertical'&&targetAxis==='vertical'&&Math.abs(sx-tx)<=0.5);
-    const straightDirection=sourceAxis==='horizontal'?(tx>=sx?'right':'left'):(ty>=sy?'bottom':'top');
-    const straightAllowed=straightAligned&&direction(sp,tp)===sourceSide&&((targetSide==='left'&&straightDirection==='left')||(targetSide==='right'&&straightDirection==='right')||(targetSide==='top'&&straightDirection==='top')||(targetSide==='bottom'&&straightDirection==='bottom'));
-    const candidateL=[{x:tx,y:sy},{x:sx,y:ty}].map(corner=>({corner,points:[sp,corner,tp]})).filter(candidate=>{const pts=candidate.points;if(Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)<0.5||Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y)<0.5)return false;return direction(pts[0],pts[1])===sourceSide&&direction(pts[1],pts[2])===targetSide});
-    const autoPoints=straightAllowed?[sp,tp]:candidateL.length?[...candidateL[0].points]:(()=>{const horizontal=Math.abs(bc.x-ac.x)>=Math.abs(bc.y-ac.y),m=horizontal?(sx+tx)/2:(sy+ty)/2;return horizontal?[sp,{x:m,y:sy},{x:m,y:ty},tp]:[sp,{x:sx,y:m},{x:tx,y:m},tp]})();
-    if(waypoints?.length){const rawPoints=[sp,...waypoints,tp],points=[rawPoints[0]];for(let i=1;i<rawPoints.length;i++){const prev=points[points.length-1],next=rawPoints[i];if(Math.abs(next.x-prev.x)>0.5&&Math.abs(next.y-prev.y)>0.5){const corner=Math.abs(next.x-prev.x)>=Math.abs(next.y-prev.y)?{x:next.x,y:prev.y}:{x:prev.x,y:next.y};points.push(corner)}points.push(next)}const mid=points[Math.floor(points.length/2)];return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide}}
-    const points=autoPoints;const d=pathThrough(points);const mid=points[Math.floor(points.length/2)];return{d,lx:mid.x,ly:mid.y-8,waypoints:[],points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide}
+    const axis=side=>['left','right'].includes(side)?'horizontal':'vertical';
+    const makeCandidate=(ss,ts)=>{
+      const s=portPoint(a,ss),t=portPoint(b,ts);
+      const candidates=[{x:t.x,y:s.y},{x:s.x,y:t.y}];
+      return candidates.map(corner=>({corner,points:[s,corner,t],sourceSide:ss,targetSide:ts}))
+        .filter(candidate=>{
+          const [p0,p1,p2]=candidate.points;
+          if(Math.hypot(p1.x-p0.x,p1.y-p0.y)<0.5||Math.hypot(p2.x-p1.x,p2.y-p1.y)<0.5)return false;
+          return direction(p0,p1)===ss&&direction(p1,p2)===ts;
+        });
+    };
+    const scoreCandidate=candidate=>{const [p0,p1,p2]=candidate.points;return Math.hypot(p1.x-p0.x,p1.y-p0.y)+Math.hypot(p2.x-p1.x,p2.y-p1.y)};
+    // With automatic ports, choose a port pair that can actually form one clean L.
+    // This avoids manufacturing a Z simply because the initially inferred ports are
+    // incompatible with a single-turn route. Explicit user-selected ports are kept.
+    if(!waypoints?.length && (!sourceExplicit||!targetExplicit)){
+      const sourceSides=sourceExplicit?[edge.sourcePort]:['top','right','bottom','left'];
+      const targetSides=targetExplicit?[edge.targetPort]:['top','right','bottom','left'];
+      const straightPairs=[];
+      if(Math.abs(ac.y-bc.y)<=0.5){
+        const ss=bc.x>=ac.x?'right':'left',ts=bc.x>=ac.x?'left':'right';
+        if(sourceSides.includes(ss)&&targetSides.includes(ts))straightPairs.push({sourceSide:ss,targetSide:ts});
+      }
+      if(Math.abs(ac.x-bc.x)<=0.5){
+        const ss=bc.y>=ac.y?'bottom':'top',ts=bc.y>=ac.y?'top':'bottom';
+        if(sourceSides.includes(ss)&&targetSides.includes(ts))straightPairs.push({sourceSide:ss,targetSide:ts});
+      }
+      if(straightPairs.length){
+        const best=straightPairs[0];sourceSide=best.sourceSide;targetSide=best.targetSide;sp=portPoint(a,sourceSide);tp=portPoint(b,targetSide);
+      }else{
+        const candidates=[];
+        for(const ss of sourceSides)for(const ts of targetSides)candidates.push(...makeCandidate(ss,ts));
+        const best=candidates.sort((x,y)=>scoreCandidate(x)-scoreCandidate(y))[0];
+        if(best){sourceSide=best.sourceSide;targetSide=best.targetSide;sp=best.points[0];tp=best.points[2];}
+      }
+    }
+    const sourceAxis=axis(sourceSide),targetAxis=axis(targetSide);
+    const straightAligned=(sourceAxis==='horizontal'&&targetAxis==='horizontal'&&Math.abs(sp.y-tp.y)<=0.5)||(sourceAxis==='vertical'&&targetAxis==='vertical'&&Math.abs(sp.x-tp.x)<=0.5);
+    const straightDirection=sourceAxis==='horizontal'?(tp.x>=sp.x?'right':'left'):(tp.y>=sp.y?'bottom':'top');
+    const straightAllowed=straightAligned&&straightDirection===sourceSide&&((targetSide==='left'&&straightDirection==='left')||(targetSide==='right'&&straightDirection==='right')||(targetSide==='top'&&straightDirection==='top')||(targetSide==='bottom'&&straightDirection==='bottom'));
+    const candidateL=makeCandidate(sourceSide,targetSide);
+    let autoPoints;
+    if(straightAllowed)autoPoints=[sp,tp];
+    else if(candidateL.length)autoPoints=[...candidateL.sort((x,y)=>scoreCandidate(x)-scoreCandidate(y))[0].points];
+    else {
+      const horizontal=Math.abs(bc.x-ac.x)>=Math.abs(bc.y-ac.y),m=horizontal?(sp.x+tp.x)/2:(sp.y+tp.y)/2;
+      autoPoints=horizontal?[sp,{x:m,y:sp.y},{x:m,y:tp.y},tp]:[sp,{x:sp.x,y:m},{x:tp.x,y:m},tp];
+    }
+    if(waypoints?.length){
+      // A single stored waypoint represents the user's one intended L corner.
+      // Snap its rendered position to the nearest valid L corner instead of inserting
+      // another artificial corner for each diagonal portion.
+      if(waypoints.length===1){
+        const wp=waypoints[0];
+        const lCandidates=makeCandidate(sourceSide,targetSide);
+        if(lCandidates.length){
+          const best=lCandidates.sort((x,y)=>Math.hypot(x.corner.x-wp.x,x.corner.y-wp.y)-Math.hypot(y.corner.x-wp.x,y.corner.y-wp.y))[0];
+          const points=best.points;
+          const mid=points[1];
+          return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
+        }
+      }
+      const rawPoints=[sp,...waypoints,tp],points=[rawPoints[0]];
+      for(let i=1;i<rawPoints.length;i++){
+        const prev=points[points.length-1],next=rawPoints[i];
+        if(Math.abs(next.x-prev.x)>0.5&&Math.abs(next.y-prev.y)>0.5){
+          const corner=Math.abs(next.x-prev.x)>=Math.abs(next.y-prev.y)?{x:next.x,y:prev.y}:{x:prev.x,y:next.y};
+          points.push(corner);
+        }
+        points.push(next);
+      }
+      const mid=points[Math.floor(points.length/2)];
+      return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
+    }
+    const points=autoPoints,d=pathThrough(points),mid=points[Math.floor(points.length/2)];
+    return{d,lx:mid.x,ly:mid.y-8,waypoints:[],points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
   }
   const edgePath=(edge,a,b)=>edgeGeometry(edge,a,b)
   const edgeSegmentAt=(edge,a,b,p)=>{if(edge.type==='contains'||edge.id.startsWith('formula-'))return null;const geometry=edgeGeometry(edge,a,b),points=geometry.points||[];let best=null;for(let index=1;index<points.length-2;index++){const a=points[index],b=points[index+1],horizontal=Math.abs(b.x-a.x)>=Math.abs(b.y-a.y),distance=horizontal?Math.abs(p.y-a.y):Math.abs(p.x-a.x),minX=Math.min(a.x,b.x)-12,maxX=Math.max(a.x,b.x)+12,minY=Math.min(a.y,b.y)-12,maxY=Math.max(a.y,b.y)+12;if(p.x<minX||p.x>maxX||p.y<minY||p.y>maxY||distance>12)continue;best={segmentIndex:index,horizontal,axis:horizontal?'y':'x',points,distance};break}return best}
