@@ -652,72 +652,94 @@ function GraphCanvas({ palettePos, paletteDragRef, rootScopeId, data, commit, no
   const edgeGeometry=(edge,a,b,waypointsOverride)=>{
     const as=size(a),bs=size(b);
     const validSide=value=>['top','right','bottom','left'].includes(value);
-    const sourceExplicit=validSide(edge.sourcePort);
-    const targetExplicit=validSide(edge.targetPort);
+    const sourceExplicit=validSide(edge.sourcePort),targetExplicit=validSide(edge.targetPort);
     let sourceSide=edgePortSide(edge,a,true),targetSide=edgePortSide(edge,b,false);
     let sp=portPoint(a,sourceSide),tp=portPoint(b,targetSide);
     const ac={x:a.x+as.width/2,y:a.y+as.height/2},bc={x:b.x+bs.width/2,y:b.y+bs.height/2};
     const waypoints=waypointsOverride??(routeDraft?.id===edge.id?routeDraft.waypoints:edge.waypoints);
+    const sideAxis=side=>['left','right'].includes(side)?'horizontal':'vertical';
+    const sideVector=side=>side==='left'?{x:-1,y:0}:side==='right'?{x:1,y:0}:side==='top'?{x:0,y:-1}:{x:0,y:1};
     const direction=(from,to)=>{const dx=to.x-from.x,dy=to.y-from.y;if(Math.abs(dx)>=Math.abs(dy))return dx>=0?'right':'left';return dy>=0?'bottom':'top'};
-    const axis=side=>['left','right'].includes(side)?'horizontal':'vertical';
-    const makeCandidate=(ss,ts)=>{
-      const s=portPoint(a,ss),t=portPoint(b,ts);
-      const candidates=[{x:t.x,y:s.y},{x:s.x,y:t.y}];
+    const samePoint=(p,q)=>Math.abs(p.x-q.x)<=0.5&&Math.abs(p.y-q.y)<=0.5;
+    const validSegment=(from,to,requiredSide)=>!samePoint(from,to)&&direction(from,to)===requiredSide;
+    const makeL=(ss,ts)=>{
+      const s=portPoint(a,ss),t=portPoint(b,ts),candidates=[{x:t.x,y:s.y},{x:s.x,y:t.y}];
       return candidates.map(corner=>({corner,points:[s,corner,t],sourceSide:ss,targetSide:ts}))
-        .filter(candidate=>{
-          const [p0,p1,p2]=candidate.points;
-          if(Math.hypot(p1.x-p0.x,p1.y-p0.y)<0.5||Math.hypot(p2.x-p1.x,p2.y-p1.y)<0.5)return false;
-          return direction(p0,p1)===ss&&direction(p1,p2)===ts;
-        });
+        .filter(candidate=>validSegment(candidate.points[0],candidate.points[1],ss)&&validSegment(candidate.points[1],candidate.points[2],ts));
     };
-    const scoreCandidate=candidate=>{const [p0,p1,p2]=candidate.points;return Math.hypot(p1.x-p0.x,p1.y-p0.y)+Math.hypot(p2.x-p1.x,p2.y-p1.y)};
-    // With automatic ports, choose a port pair that can actually form one clean L.
-    // This avoids manufacturing a Z simply because the initially inferred ports are
-    // incompatible with a single-turn route. Explicit user-selected ports are kept.
+    const scoreL=candidate=>{const [p0,p1,p2]=candidate.points;return Math.hypot(p1.x-p0.x,p1.y-p0.y)+Math.hypot(p2.x-p1.x,p2.y-p1.y)};
+
+    // Automatic ports are chosen from the relative node position, but only after
+    // checking that the resulting ports can produce a clean straight/L route.
+    // Explicit ports remain locked: they are user intent.
     if(!waypoints?.length && (!sourceExplicit||!targetExplicit)){
       const sourceSides=sourceExplicit?[edge.sourcePort]:['top','right','bottom','left'];
       const targetSides=targetExplicit?[edge.targetPort]:['top','right','bottom','left'];
-      const straightPairs=[];
-      if(Math.abs(ac.y-bc.y)<=0.5){
-        const ss=bc.x>=ac.x?'right':'left',ts=bc.x>=ac.x?'left':'right';
-        if(sourceSides.includes(ss)&&targetSides.includes(ts))straightPairs.push({sourceSide:ss,targetSide:ts});
+      const candidates=[];
+      for(const ss of sourceSides){
+        for(const ts of targetSides){
+          const s=portPoint(a,ss),t=portPoint(b,ts);
+          const straight=sideAxis(ss)===sideAxis(ts)&&
+            ((sideAxis(ss)==='horizontal'&&Math.abs(s.y-t.y)<=0.5&&((ss==='right'&&ts==='left'&&t.x>s.x)||(ss==='left'&&ts==='right'&&t.x<s.x)))||
+             (sideAxis(ss)==='vertical'&&Math.abs(s.x-t.x)<=0.5&&((ss==='bottom'&&ts==='top'&&t.y>s.y)||(ss==='top'&&ts==='bottom'&&t.y<s.y))));
+          const l=makeL(ss,ts);
+          if(straight)candidates.push({ss,ts,cost:0,points:[s,t]});
+          else if(l.length)candidates.push({ss,ts,cost:1,points:l.sort((x,y)=>scoreL(x)-scoreL(y))[0].points});
+        }
       }
-      if(Math.abs(ac.x-bc.x)<=0.5){
-        const ss=bc.y>=ac.y?'bottom':'top',ts=bc.y>=ac.y?'top':'bottom';
-        if(sourceSides.includes(ss)&&targetSides.includes(ts))straightPairs.push({sourceSide:ss,targetSide:ts});
-      }
-      if(straightPairs.length){
-        const best=straightPairs[0];sourceSide=best.sourceSide;targetSide=best.targetSide;sp=portPoint(a,sourceSide);tp=portPoint(b,targetSide);
-      }else{
-        const candidates=[];
-        for(const ss of sourceSides)for(const ts of targetSides)candidates.push(...makeCandidate(ss,ts));
-        const best=candidates.sort((x,y)=>scoreCandidate(x)-scoreCandidate(y))[0];
-        if(best){sourceSide=best.sourceSide;targetSide=best.targetSide;sp=best.points[0];tp=best.points[2];}
-      }
+      const best=candidates.sort((x,y)=>x.cost-y.cost || scoreL({points:x.points})-scoreL({points:y.points}))[0];
+      if(best){sourceSide=best.ss;targetSide=best.ts;sp=best.points[0];tp=best.points.at(-1)}
     }
-    const sourceAxis=axis(sourceSide),targetAxis=axis(targetSide);
-    const straightAligned=(sourceAxis==='horizontal'&&targetAxis==='horizontal'&&Math.abs(sp.y-tp.y)<=0.5)||(sourceAxis==='vertical'&&targetAxis==='vertical'&&Math.abs(sp.x-tp.x)<=0.5);
-    const straightDirection=sourceAxis==='horizontal'?(tp.x>=sp.x?'right':'left'):(tp.y>=sp.y?'bottom':'top');
-    const straightAllowed=straightAligned&&straightDirection===sourceSide&&((targetSide==='left'&&straightDirection==='left')||(targetSide==='right'&&straightDirection==='right')||(targetSide==='top'&&straightDirection==='top')||(targetSide==='bottom'&&straightDirection==='bottom'));
-    const candidateL=makeCandidate(sourceSide,targetSide);
+
+    const sourceAxis=sideAxis(sourceSide),targetAxis=sideAxis(targetSide);
+    const straightAllowed=sourceAxis===targetAxis &&
+      ((sourceAxis==='horizontal'&&Math.abs(sp.y-tp.y)<=0.5&&((sourceSide==='right'&&targetSide==='left'&&tp.x>sp.x)||(sourceSide==='left'&&targetSide==='right'&&tp.x<sp.x)))||
+       (sourceAxis==='vertical'&&Math.abs(sp.x-tp.x)<=0.5&&((sourceSide==='bottom'&&targetSide==='top'&&tp.y>sp.y)||(sourceSide==='top'&&targetSide==='bottom'&&tp.y<sp.y))));
+
     let autoPoints;
-    if(straightAllowed)autoPoints=[sp,tp];
-    else if(candidateL.length)autoPoints=[...candidateL.sort((x,y)=>scoreCandidate(x)-scoreCandidate(y))[0].points];
+    const lCandidates=makeL(sourceSide,targetSide);
+    if(straightAllowed) autoPoints=[sp,tp];
+    else if(lCandidates.length) autoPoints=[...lCandidates.sort((x,y)=>scoreL(x)-scoreL(y))[0].points];
     else {
-      const horizontal=Math.abs(bc.x-ac.x)>=Math.abs(bc.y-ac.y),m=horizontal?(sp.x+tp.x)/2:(sp.y+tp.y)/2;
-      autoPoints=horizontal?[sp,{x:m,y:sp.y},{x:m,y:tp.y},tp]:[sp,{x:sp.x,y:m},{x:tp.x,y:m},tp];
+      // Both endpoint stubs are sacred: the first segment must leave the source
+      // perpendicular to its selected side, and the last segment must enter the
+      // target perpendicular to its selected side. When one L turn cannot satisfy
+      // both constraints, use the shortest two-turn orthogonal route between stubs.
+      const gap=24;
+      const sv=sideVector(sourceSide),tv=sideVector(targetSide);
+      const ss={x:sp.x+sv.x*gap,y:sp.y+sv.y*gap},tt={x:tp.x+tv.x*gap,y:tp.y+tv.y*gap};
+      const candidates=[];
+      const push=(points)=>{
+        const clean=points.filter((p,i)=>i===0||!samePoint(p,points[i-1]));
+        if(clean.length<2)return;
+        if(direction(clean[0],clean[1])!==sourceSide||direction(clean.at(-2),clean.at(-1))!==targetSide)return;
+        for(let i=1;i<clean.length-1;i++){
+          const a0=clean[i-1],a1=clean[i],a2=clean[i+1];
+          if(Math.abs(a1.x-a0.x)>0.5&&Math.abs(a1.y-a0.y)>0.5)return;
+          if(Math.abs(a2.x-a1.x)>0.5&&Math.abs(a2.y-a1.y)>0.5)return;
+        }
+        const length=clean.slice(0,-1).reduce((sum,p,i)=>sum+Math.hypot(clean[i+1].x-p.x,clean[i+1].y-p.y),0);
+        candidates.push({points:clean,length});
+      };
+      // Horizontal/vertical bridge candidates. These are deliberately evaluated
+      // against the actual source/target side directions, so an inverted-Z/N route
+      // is chosen only when the selected ports require it.
+      push([sp,ss,{x:tt.x,y:ss.y},tt,tp]);
+      push([sp,ss,{x:ss.x,y:tt.y},tt,tp]);
+      push([sp,{x:ss.x,y:tt.y},tt,tp]);
+      push([sp,{x:tt.x,y:ss.y},tt,tp]);
+      const best=candidates.sort((x,y)=>x.length-y.length)[0];
+      autoPoints=best?.points||[sp,tp];
     }
+
     if(waypoints?.length){
-      // A single stored waypoint represents the user's one intended L corner.
-      // Snap its rendered position to the nearest valid L corner instead of inserting
-      // another artificial corner for each diagonal portion.
+      // A single stored waypoint is treated as the user's intended L corner only
+      // when that corner still respects both endpoint port directions. Otherwise
+      // retain the endpoint-perpendicular invariant and orthogonalize around it.
       if(waypoints.length===1){
-        const wp=waypoints[0];
-        const lCandidates=makeCandidate(sourceSide,targetSide);
-        if(lCandidates.length){
-          const best=lCandidates.sort((x,y)=>Math.hypot(x.corner.x-wp.x,x.corner.y-wp.y)-Math.hypot(y.corner.x-wp.x,y.corner.y-wp.y))[0];
-          const points=best.points;
-          const mid=points[1];
+        const wp=waypoints[0],validL=lCandidates.filter(item=>Math.hypot(item.corner.x-wp.x,item.corner.y-wp.y)<=Math.max(24,Math.hypot(sp.x-tp.x,sp.y-tp.y)));
+        if(validL.length){
+          const best=validL.sort((x,y)=>Math.hypot(x.corner.x-wp.x,x.corner.y-wp.y)-Math.hypot(y.corner.x-wp.x,y.corner.y-wp.y))[0],points=best.points,mid=points[1];
           return{d:pathThrough(points),lx:mid.x,ly:mid.y-8,waypoints,points,sourcePoint:sp,targetPoint:tp,sourceSide,targetSide};
         }
       }
