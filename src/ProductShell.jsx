@@ -13,7 +13,7 @@ const blankUniverse=name=>normalizeData({universe:{id:createId('universe'),name,
 const guidedDemoData=()=>normalizeData({
   ...sampleData,
   universe:{id:'demo-universe',name:'Business Operations Demo',description:'A simple business hierarchy for learning the main Universe Mapper workflow.'},
-  structures:[{id:'demo-structure',name:'Business Operations',description:'A mother → child → grandchild business structure with a few supporting relationships.'}],
+  structures:[{id:'demo-structure',name:'Business Operations',description:'A mother → child → grandchild business structure. Hierarchy connectors come from parent-child structure; only explicit causal relationships are shown as additional lines.'}],
   nodes:[
     {id:'demo-business',structureId:'demo-structure',parentId:null,name:'Business Operations',type:'category',value:'',description:'The mother/root of the demo hierarchy.',status:'active',zIndex:1,x:430,y:70,width:210,height:72,locked:false,fields:[],textAlign:'center',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
     {id:'demo-marketing',structureId:'demo-structure',parentId:'demo-business',name:'Marketing',type:'process',value:'',description:'Child of Business Operations.',status:'active',zIndex:2,x:120,y:220,width:190,height:68,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
@@ -27,15 +27,6 @@ const guidedDemoData=()=>normalizeData({
     {id:'demo-key-accounts',structureId:'demo-structure',parentId:'demo-enterprise-sales',name:'Key Accounts',type:'category',value:'',description:'A deeper child under Enterprise Sales.',status:'active',zIndex:10,x:820,y:500,width:180,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}}
   ],
   relationships:[
-    {id:'demo-r1',sourceId:'demo-business',targetId:'demo-marketing',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r2',sourceId:'demo-business',targetId:'demo-product',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r3',sourceId:'demo-business',targetId:'demo-sales',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r4',sourceId:'demo-marketing',targetId:'demo-campaign',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r5',sourceId:'demo-marketing',targetId:'demo-acquisition',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r6',sourceId:'demo-product',targetId:'demo-design',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r7',sourceId:'demo-product',targetId:'demo-launch',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r8',sourceId:'demo-sales',targetId:'demo-enterprise-sales',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
-    {id:'demo-r9',sourceId:'demo-enterprise-sales',targetId:'demo-key-accounts',type:'structure',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'bottom',targetPort:'top',manualRoute:false,waypoints:[]},
     {id:'demo-r10',sourceId:'demo-campaign',targetId:'demo-acquisition',type:'influences',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'right',targetPort:'left',manualRoute:false,waypoints:[]},
     {id:'demo-r11',sourceId:'demo-launch',targetId:'demo-enterprise-sales',type:'supports',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'right',targetPort:'left',manualRoute:false,waypoints:[]}
   ],

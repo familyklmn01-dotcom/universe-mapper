@@ -1,7 +1,7 @@
 export const demoGuide = {
   id: 'universe-guided-demo-v3',
   title: 'Guided Demo — Universe Mapper',
-  subtitle: 'Follow four short steps. You can still explore the available tools while the guide is visible.',
+  subtitle: 'Follow four short steps. The demo uses one clean hierarchy and only adds explicit relationship lines where they demonstrate a different connection.',
   steps: [
     {
       id: 'select-node',
@@ -12,7 +12,7 @@ export const demoGuide = {
     {
       id: 'edit-relationship',
       title: '2. Try a Relationship',
-      text: 'Click a relationship line once to open Relationship Properties. You can move an endpoint to the top, right, bottom, or left side of a node. The relationship line uses orthogonal routing — no diagonal segments.',
+      text: 'Click one of the explicit relationship lines once to open Relationship Properties. The hierarchy lines are already supplied by the parent-child structure, so the demo does not duplicate those connections. You can move an endpoint to the top, right, bottom, or left side of a node. The relationship line uses orthogonal routing — no diagonal segments.',
       target: 'relationship'
     },
     {
