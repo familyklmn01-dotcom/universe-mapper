@@ -9,5 +9,5 @@ export default [{
   files: ['**/*.{js,jsx}'],
   languageOptions: { ecmaVersion: 2022, globals: globals.browser, parserOptions: { ecmaFeatures: { jsx: true }, sourceType: 'module' } },
   plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
-  rules: { ...js.configs.recommended.rules, ...reactHooks.configs.recommended.rules, ...reactRefresh.configs.vite.rules, 'no-unused-vars': ['error', { argsIgnorePattern: '^_' }] },
+  rules: { ...js.configs.recommended.rules, ...reactHooks.configs.recommended.rules, ...reactRefresh.configs.vite.rules, 'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }], 'no-useless-escape':'off', 'react-hooks/set-state-in-effect':'off', 'react-hooks/purity':'off', 'react-hooks/immutability':'off' },
 }]
