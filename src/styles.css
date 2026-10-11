@@ -394,3 +394,32 @@
   stroke-linejoin: round;
   pointer-events: none;
 }
+
+/* Recursive Solar System orbit tracks: each direct child has a local parent-centred orbit. */
+.solar-orbit-rings {
+  opacity: 1;
+  overflow: visible;
+}
+.solar-orbit-ring {
+  fill: none;
+  stroke: #8cc8ef;
+  stroke-opacity: .25;
+  stroke-width: 1.15;
+  stroke-dasharray: none;
+  vector-effect: non-scaling-stroke;
+}
+.solar-orbit-ring.depth-2 { stroke: #6ee7d2; stroke-opacity: .29; stroke-dasharray: 5 3; }
+.solar-orbit-ring.depth-3 { stroke: #b9a2ff; stroke-opacity: .31; stroke-dasharray: 2 4; }
+.solar-orbit-ring.depth-4,
+.solar-orbit-ring.depth-5,
+.solar-orbit-ring.depth-6 { stroke: #f5a8c2; stroke-opacity: .3; stroke-dasharray: 4 4; }
+.canvas.theme-light .solar-orbit-ring { stroke: #426e91; stroke-opacity: .34; }
+.canvas.theme-light .solar-orbit-ring.depth-2 { stroke: #138c7a; stroke-opacity: .36; }
+.canvas.theme-light .solar-orbit-ring.depth-3 { stroke: #7251bd; stroke-opacity: .36; }
+.solar-system-mode .solar-sphere-node .solar-sphere {
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .28));
+}
+.solar-system-mode .solar-sphere-node .solar-label {
+  font-family: Inter, "Segoe UI", sans-serif;
+  letter-spacing: .1px;
+}
