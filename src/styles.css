@@ -423,3 +423,38 @@
   font-family: Inter, "Segoe UI", sans-serif;
   letter-spacing: .1px;
 }
+
+/* Print Studio: keep the launcher distinct from the Print action and expose Page Setup as a named group. */
+.workspace-toolbar > .print-studio-launch {
+  min-width: 106px;
+  background: #17243a;
+  border: 1px solid #3b4d69;
+  color: #e6edf8;
+}
+.workspace-toolbar > .print-studio-launch:hover,
+.workspace-toolbar > .print-studio-launch.active {
+  background: #263b67;
+  border-color: #6c88dc;
+  color: #ffffff;
+}
+.printout-page-setup {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border: 1px solid #394967;
+  border-radius: 9px;
+  background: #0f192b;
+  flex: 0 0 auto;
+}
+.printout-page-setup-title {
+  color: #91a7c8;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.printout-page-setup .printout-select { border-color: #34445e; }
+.printout-document-actions .print-action { display: none; }
