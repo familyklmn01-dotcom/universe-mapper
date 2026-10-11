@@ -61,3 +61,13 @@ The single-file `Universe_Mapper_Final_v1_7_Preview.html` is provided only for o
 - Drag a connector from the top, right, bottom, or left handle and drop it on another shape.
 - Circle is available from **Insert → Circle** and the node type selector.
 - Open `Business_Performance_Mind_Map_Simulation_Sample.json` for a concrete mind map with three formulas and two scenarios.
+
+## P01–P10 foundation update
+
+- Native editable projects use `.mf` (Mapper File); JSON remains available for interchange.
+- `.mf` embeds local image assets, so Firebase Storage is not required for device files.
+- Double-click a relationship to add a manual waypoint, drag active waypoints to route it, or reset the automatic route from the relationship editor.
+- Node movement snaps to a 12 px grid; hold Shift while dragging to bypass snapping.
+- Free text supports direct double-click editing and automatic growth.
+- Presentation frames, Saved Views, and Zoom Window are persisted as project foundation features.
+- Cloud asset synchronization is deferred until Firebase Storage is activated; embedded assets remain functional.

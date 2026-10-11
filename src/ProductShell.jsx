@@ -4,11 +4,34 @@ import { getFirebaseServices, isOnlineApp } from './lib/firebase.js'
 import { createId, loadProjectData, normalizeData, saveData, saveProjectData, storageGet, storageSet } from './lib/store.js'
 import UniverseLogo from './components/UniverseLogo.jsx'
 import { sampleData } from './data/sampleData.js'
+import { demoGuide, demoGuideStorageKey } from './demo/demoGuide.js'
 
 const PROJECT_KEY='um-projects-v1'
 const readProjects=()=>{try{const value=JSON.parse(storageGet(PROJECT_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
 const writeProjects=projects=>storageSet(PROJECT_KEY,JSON.stringify(projects))
 const blankUniverse=name=>normalizeData({universe:{id:createId('universe'),name,description:''},structures:[{id:createId('structure'),name:'Main Structure',description:''}],nodes:[],relationships:[],formulas:[],savedViews:[]})
+const guidedDemoData=()=>normalizeData({
+  ...sampleData,
+  universe:{id:'demo-universe',name:'Business Operations Demo',description:'A simple business hierarchy for learning the main Universe Mapper workflow.'},
+  structures:[{id:'demo-structure',name:'Business Operations',description:'A mother → child → grandchild business structure. Hierarchy connectors come from parent-child structure; only explicit causal relationships are shown as additional lines.'}],
+  nodes:[
+    {id:'demo-business',structureId:'demo-structure',parentId:null,name:'Business Operations',type:'category',value:'',description:'The mother/root of the demo hierarchy.',status:'active',zIndex:1,x:430,y:70,width:210,height:72,locked:false,fields:[],textAlign:'center',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-marketing',structureId:'demo-structure',parentId:'demo-business',name:'Marketing',type:'process',value:'',description:'Child of Business Operations.',status:'active',zIndex:2,x:120,y:220,width:190,height:68,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-product',structureId:'demo-structure',parentId:'demo-business',name:'Product',type:'category',value:'',description:'Child of Business Operations.',status:'active',zIndex:3,x:430,y:220,width:190,height:68,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-sales',structureId:'demo-structure',parentId:'demo-business',name:'Sales',type:'process',value:'',description:'Child of Business Operations.',status:'active',zIndex:4,x:740,y:220,width:190,height:68,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-campaign',structureId:'demo-structure',parentId:'demo-marketing',name:'Campaign',type:'process',value:'',description:'Grandchild under Marketing.',status:'active',zIndex:5,x:60,y:370,width:180,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-acquisition',structureId:'demo-structure',parentId:'demo-marketing',name:'Customer Acquisition',type:'process',value:'',description:'Grandchild under Marketing.',status:'active',zIndex:6,x:260,y:370,width:190,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-design',structureId:'demo-structure',parentId:'demo-product',name:'Product Design',type:'process',value:'',description:'Grandchild under Product.',status:'active',zIndex:7,x:460,y:370,width:180,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-launch',structureId:'demo-structure',parentId:'demo-product',name:'Product Launch',type:'process',value:'',description:'Grandchild under Product.',status:'active',zIndex:8,x:660,y:370,width:180,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-enterprise-sales',structureId:'demo-structure',parentId:'demo-sales',name:'Enterprise Sales',type:'process',value:'',description:'Grandchild under Sales.',status:'active',zIndex:9,x:820,y:370,width:190,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}},
+    {id:'demo-key-accounts',structureId:'demo-structure',parentId:'demo-enterprise-sales',name:'Key Accounts',type:'category',value:'',description:'A deeper child under Enterprise Sales.',status:'active',zIndex:10,x:820,y:500,width:180,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}}
+  ],
+  relationships:[
+    {id:'demo-r10',sourceId:'demo-campaign',targetId:'demo-acquisition',type:'influences',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'right',targetPort:'left',manualRoute:false,waypoints:[]},
+    {id:'demo-r11',sourceId:'demo-launch',targetId:'demo-enterprise-sales',type:'supports',weight:'',strokeStyle:'dashed',strokeWidth:1.7,color:'#7897f5',startArrow:'none',endArrow:'arrow',sourcePort:'right',targetPort:'left',manualRoute:false,waypoints:[]}
+  ],
+  formulas:[],savedViews:[]
+})
 
 const friendlyError=error=>({
   'auth/invalid-credential':'Email or password is incorrect.',
@@ -19,9 +42,19 @@ const friendlyError=error=>({
 }[error?.code]||error?.message||'Something went wrong.')
 
 export default function ProductShell(){
-  const [screen,setScreen]=useState('landing'),[user,setUser]=useState(null),[activeProject,setActiveProject]=useState(null),[editorData,setEditorData]=useState(null),[syncStatus,setSyncStatus]=useState(''),[loading,setLoading]=useState(isOnlineApp()),[message,setMessage]=useState(''),[busy,setBusy]=useState(false)
-  const syncTimer=useRef(null),lastQueuedSignature=useRef('')
-  useEffect(()=>{if(screen!=='editor'||activeProject?.source!=='cloud')return;let unsubscribe;getFirebaseServices().then(({db,firestoreSdk})=>{unsubscribe=firestoreSdk.onSnapshot(firestoreSdk.doc(db,'universes',activeProject.id),snapshot=>{const cloud=snapshot.data()?.data;if(!cloud)return;const normalized=normalizeData(cloud),signature=JSON.stringify(normalized);if(signature!==lastQueuedSignature.current)setEditorData(normalized);setSyncStatus('Live')},()=>setSyncStatus('Live disconnected'))});return()=>unsubscribe?.()},[screen,activeProject])
+  const [screen,setScreen]=useState('landing'),[user,setUser]=useState(null),[activeProject,setActiveProject]=useState(null),[editorData,setEditorData]=useState(null),[syncStatus,setSyncStatus]=useState(''),[loading,setLoading]=useState(isOnlineApp()),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[demoStep,setDemoStep]=useState(0),[demoComplete,setDemoComplete]=useState(false)
+  const syncTimer=useRef(null),lastQueuedSignature=useRef(''),pendingCloudWrite=useRef(null)
+  useEffect(()=>{if(screen!=='editor'||activeProject?.source!=='cloud')return;let unsubscribe;getFirebaseServices().then(({db,firestoreSdk})=>{unsubscribe=firestoreSdk.onSnapshot(firestoreSdk.doc(db,'universes',activeProject.id),snapshot=>{const cloud=snapshot.data()?.data;if(!cloud)return;const normalized=normalizeData(cloud),signature=JSON.stringify(normalized),pending=pendingCloudWrite.current;
+      // A Firestore snapshot can legally arrive with the PREVIOUS document while our
+      // optimistic local edit is waiting in the 1.2s debounce / write pipeline.
+      // Never replace the editor with that stale snapshot: doing so rolls back an
+      // explicit local relationship edit (route/color/etc.) immediately after release.
+      if(pending){
+        if(signature===pending.signature){pendingCloudWrite.current=null;lastQueuedSignature.current=signature}
+        else {setSyncStatus('Saving');return}
+      }
+      if(signature!==lastQueuedSignature.current)setEditorData(normalized);setSyncStatus('Live')
+    },()=>setSyncStatus('Live disconnected'))});return()=>unsubscribe?.()},[screen,activeProject])
   useEffect(()=>()=>clearTimeout(syncTimer.current),[])
   useEffect(()=>{if(!isOnlineApp())return;let unsubscribe;getFirebaseServices().then(({auth,authSdk})=>{unsubscribe=authSdk.onAuthStateChanged(auth,current=>{setUser(current);setScreen(current?(current.emailVerified?'projects':'verify'):'landing');setLoading(false)})}).catch(error=>{setMessage(friendlyError(error));setLoading(false)});return()=>unsubscribe?.()},[])
   const run=async action=>{setBusy(true);setMessage('');try{await action()}catch(error){setMessage(friendlyError(error))}finally{setBusy(false)}}
@@ -32,39 +65,104 @@ export default function ProductShell(){
   const resend=()=>run(async()=>{const {authSdk}=await getFirebaseServices();await authSdk.sendEmailVerification(user);setMessage('Verification email sent again.')})
   const logout=()=>run(async()=>{if(user?.demo){setUser(null);setScreen('landing');return}const {auth,authSdk}=await getFirebaseServices();await authSdk.signOut(auth)})
   const openProject=async project=>{setSyncStatus('');let data=loadProjectData(project.id);if(project.source==='cloud')try{setSyncStatus('Loading cloud');const {db,firestoreSdk}=await getFirebaseServices(),snapshot=await firestoreSdk.getDoc(firestoreSdk.doc(db,'universes',project.id));if(snapshot.exists()&&snapshot.data().data)data=normalizeData(snapshot.data().data);saveProjectData(project.id,data);setSyncStatus('Cloud ready')}catch(error){setSyncStatus('Local fallback');setMessage(friendlyError(error))}lastQueuedSignature.current=JSON.stringify(data);setActiveProject(project);setEditorData(data);setScreen('editor')}
-  const syncCloud=useCallback(data=>{if(!activeProject||activeProject.source!=='cloud'||!user||activeProject.role==='Viewer')return;const signature=JSON.stringify(data);if(signature===lastQueuedSignature.current)return;lastQueuedSignature.current=signature;clearTimeout(syncTimer.current);setSyncStatus('Unsaved changes');syncTimer.current=setTimeout(()=>{setSyncStatus('Saving');getFirebaseServices().then(async({db,firestoreSdk})=>{await firestoreSdk.updateDoc(firestoreSdk.doc(db,'universes',activeProject.id),{data,updatedAt:firestoreSdk.serverTimestamp()});for(const presentation of data.presentations||[]){const {scenes,...record}=presentation,presentationRef=firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id);await firestoreSdk.setDoc(presentationRef,{...record,ownerId:user.uid,sceneCount:scenes.length,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});for(const scene of scenes)await firestoreSdk.setDoc(firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id,'scenes',scene.id),scene,{merge:true})}}).then(()=>setSyncStatus('Saved to cloud')).catch(()=>{lastQueuedSignature.current='';setSyncStatus('Save failed')})},1200)},[activeProject,user])
+  const syncCloud=useCallback(data=>{if(!activeProject||activeProject.source!=='cloud'||!user||activeProject.role==='Viewer')return;const signature=JSON.stringify(data);if(signature===lastQueuedSignature.current&&!pendingCloudWrite.current)return;lastQueuedSignature.current=signature;pendingCloudWrite.current={signature};clearTimeout(syncTimer.current);setSyncStatus('Unsaved changes');syncTimer.current=setTimeout(()=>{const writeSignature=signature;setSyncStatus('Saving');getFirebaseServices().then(async({db,firestoreSdk})=>{await firestoreSdk.updateDoc(firestoreSdk.doc(db,'universes',activeProject.id),{data,updatedAt:firestoreSdk.serverTimestamp()});for(const presentation of data.presentations||[]){const {scenes,...record}=presentation,presentationRef=firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id);await firestoreSdk.setDoc(presentationRef,{...record,ownerId:user.uid,sceneCount:scenes.length,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});for(const scene of scenes)await firestoreSdk.setDoc(firestoreSdk.doc(db,'universes',activeProject.id,'presentations',presentation.id,'scenes',scene.id),scene,{merge:true})}}).then(()=>{if(pendingCloudWrite.current?.signature===writeSignature)setSyncStatus('Saving');else setSyncStatus('Unsaved changes')}).catch(()=>{if(pendingCloudWrite.current?.signature===writeSignature)pendingCloudWrite.current=null;lastQueuedSignature.current='';setSyncStatus('Save failed')})},1200)},[activeProject,user])
   if(loading)return <div className="shell-loading"><UniverseLogo className="loading-logo"/><p>Loading Universe Mapper…</p></div>
-  if(screen==='editor')return <EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} syncStatus={syncStatus} onDataChange={syncCloud} onExit={()=>setScreen('projects')}/>
+  const onDemoSelect=()=>{}
+  const finishDemo=()=>{setDemoComplete(true);storageSet(demoGuideStorageKey,'completed')}
+  const nextDemoStep=()=>{if(demoStep>=demoGuide.steps.length-1){finishDemo();return}setDemoStep(value=>Math.min(value+1,demoGuide.steps.length-1))}
+  const loginFromDemo=()=>{setDemoComplete(false);setUser(null);setActiveProject(null);setEditorData(null);setScreen('signin')}
+  if(screen==='editor')return <><EditorApp key={activeProject?.id||'current'} projectId={activeProject?.id} initialData={editorData} user={user} readOnly={activeProject?.role==='Viewer'} demoMode={Boolean(user?.demo)} syncStatus={syncStatus} onDataChange={syncCloud} onDemoSelect={onDemoSelect} onExit={()=>setScreen('projects')}/>{user?.demo&&!demoComplete&&<GuidedDemoOverlay step={demoGuide.steps[demoStep]} stepIndex={demoStep} total={demoGuide.steps.length} onNext={nextDemoStep}/>} {user?.demo&&demoComplete&&<DemoCompleteOverlay title={demoGuide.completionTitle} text={demoGuide.completionText} action={demoGuide.completionAction} onLogin={loginFromDemo} onReplay={()=>{setDemoComplete(false);setDemoStep(0)}}/>}</>
   if(screen==='projects')return <ProjectManager user={user} onOpen={openProject} onProfile={()=>setScreen('profile')} onLogout={logout}/>
   if(screen==='profile')return <Profile user={user} activeProject={activeProject} onContinue={()=>setScreen(activeProject?'editor':'projects')} onProjects={()=>setScreen('projects')} onLogout={logout}/>
   if(screen==='verify')return <Verification user={user} message={message} busy={busy} onResend={resend} onRefresh={()=>run(async()=>{await user.reload();if(user.emailVerified)setScreen('projects');else setMessage('Email is not verified yet.')})} onLogout={logout}/>
   const openOfflineDemo = () => {
     const demoId = 'demo-universe'
-    const demoData = normalizeData({
-      ...sampleData,
-      universe: {
-        ...sampleData.universe,
-        id: demoId,
-        name: 'Business Universe Demo',
-        description: 'A ready-to-explore Universe showing structure, relationships, formulas, and scenarios.'
-      }
-    })
-    const demoProject = {
-      id: demoId,
-      name: demoData.universe.name,
-      ownerId: 'local-demo',
-      role: 'Owner',
-      updatedAt: new Date().toISOString(),
-      source: 'local'
-    }
+    const demoData = guidedDemoData()
+    const demoProject = {id:demoId,name:demoData.universe.name,ownerId:'local-demo',role:'Owner',updatedAt:new Date().toISOString(),source:'local'}
     saveData(demoData)
-    saveProjectData(demoId, demoData)
-    const projects = readProjects().filter(item => item.id !== demoId)
-    writeProjects([demoProject, ...projects].filter(item => item.source !== 'cloud'))
+    saveProjectData(demoId,demoData)
     setUser({displayName:'Demo User',email:'demo@local',emailVerified:true,demo:true})
-    setScreen('projects')
+    setActiveProject(demoProject)
+    setEditorData(demoData)
+    setDemoStep(0)
+    setDemoComplete(false)
+    setScreen('editor')
   }
   return <Landing screen={screen} setScreen={setScreen} message={message} busy={busy} signIn={signIn} signUp={signUp} google={google} reset={reset} demo={openOfflineDemo}/>
+}
+
+
+function GuidedDemoOverlay({step,stepIndex,total,onNext}){
+  const [position,setPosition]=useState(null)
+  const dragRef=useRef(null)
+  useEffect(()=>{
+    const clamp=()=>{
+      const el=dragRef.current?.element
+      if(!el)return
+      const area=document.querySelector('.canvas')||document.querySelector('.workspace')
+      if(!area)return
+      const areaRect=area.getBoundingClientRect()
+      const rect=el.getBoundingClientRect()
+      const maxLeft=Math.max(areaRect.left,areaRect.right-rect.width)
+      const maxTop=Math.max(areaRect.top,areaRect.bottom-rect.height)
+      const next={
+        x:Math.min(Math.max(rect.left,areaRect.left),maxLeft),
+        y:Math.min(Math.max(rect.top,areaRect.top),maxTop)
+      }
+      setPosition(current=>current&&Math.abs(current.x-next.x)<.5&&Math.abs(current.y-next.y)<.5?current:next)
+    }
+    const timer=requestAnimationFrame(clamp)
+    window.addEventListener('resize',clamp)
+    return()=>{cancelAnimationFrame(timer);window.removeEventListener('resize',clamp)}
+  },[])
+  const beginDrag=event=>{
+    if(event.button!==0)return
+    const el=event.currentTarget.closest('[data-guided-demo-overlay]')
+    const area=document.querySelector('.canvas')||document.querySelector('.workspace')
+    if(!el||!area)return
+    const rect=el.getBoundingClientRect(),areaRect=area.getBoundingClientRect()
+    dragRef.current={element:el,areaRect,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,moved:false}
+    el.setPointerCapture?.(event.pointerId)
+    event.preventDefault()
+  }
+  const moveDrag=event=>{
+    const drag=dragRef.current
+    if(!drag)return
+    const rect=drag.element.getBoundingClientRect(),areaRect=drag.areaRect
+    const maxLeft=Math.max(areaRect.left,areaRect.right-rect.width)
+    const maxTop=Math.max(areaRect.top,areaRect.bottom-rect.height)
+    const x=Math.min(Math.max(event.clientX-drag.offsetX,areaRect.left),maxLeft)
+    const y=Math.min(Math.max(event.clientY-drag.offsetY,areaRect.top),maxTop)
+    drag.moved=true
+    setPosition({x,y})
+  }
+  const endDrag=()=>{dragRef.current=null}
+  if(!step)return null
+  const positionStyle=position?{left:position.x,top:position.y,bottom:'auto'}:{left:124,bottom:30}
+  return <div data-guided-demo-overlay ref={el=>{if(el&&!dragRef.current)dragRef.current={element:el}}} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} style={{position:'fixed',...positionStyle,width:500,maxWidth:'calc(100vw - 160px)',zIndex:1200,padding:'22px 24px 20px',border:'1px solid rgba(255,255,255,.28)',borderRadius:16,background:'rgba(7,13,24,.98)',boxShadow:'0 20px 55px rgba(0,0,0,.46)',color:'#fff'}}>
+    <div onPointerDown={beginDrag} title="Drag to move within the canvas area" style={{cursor:'grab',margin:'-22px -24px 14px',padding:'12px 24px 10px',borderBottom:'1px solid rgba(255,255,255,.10)',userSelect:'none'}}>
+      <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.9,color:'#fff'}}>Guided Demo · Step {stepIndex+1} of {total}</div>
+    </div>
+    <strong style={{display:'block',fontSize:18,marginBottom:8,color:'#fff'}}>{step.title}</strong>
+    <p style={{margin:'0 0 18px',lineHeight:1.62,fontSize:15,color:'#fff'}}>{step.text}</p>
+    <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <button onClick={onNext} style={{border:'1px solid #7897f5',background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:9,padding:'9px 16px',cursor:'pointer'}}>{stepIndex===total-1?'Finish demo':'Next'}</button>
+    </div>
+  </div>
+}
+
+function DemoCompleteOverlay({title,text,action,onLogin,onReplay}){
+  return <div style={{position:'fixed',inset:0,zIndex:1300,display:'grid',placeItems:'center',background:'rgba(4,8,15,.68)',backdropFilter:'blur(5px)'}}>
+    <section style={{width:440,maxWidth:'calc(100vw - 40px)',padding:26,border:'1px solid rgba(120,151,245,.38)',borderRadius:18,background:'#101827',color:'#eef3ff',boxShadow:'0 24px 70px rgba(0,0,0,.45)'}}>
+      <div style={{fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',opacity:.62,marginBottom:8}}>Universe Mapper</div>
+      <h2 style={{margin:'0 0 10px',fontSize:24}}>{title}</h2>
+      <p style={{margin:'0 0 20px',lineHeight:1.55,color:'#c8d1e5'}}>{text}</p>
+      <div style={{display:'flex',gap:10}}>
+        <button onClick={onReplay} style={{flex:1,border:'1px solid #35445e',background:'transparent',color:'#dce5f7',borderRadius:10,padding:'10px 14px',cursor:'pointer'}}>Replay Demo</button>
+        <button onClick={onLogin} style={{flex:1,border:0,background:'#7897f5',color:'#07101f',fontWeight:700,borderRadius:10,padding:'10px 14px',cursor:'pointer'}}>{action}</button>
+      </div>
+    </section>
+  </div>
 }
 
 function ProjectManager({user,onOpen,onProfile,onLogout}){
@@ -94,7 +192,7 @@ function ProjectManager({user,onOpen,onProfile,onLogout}){
 function Landing({screen,setScreen,message,busy,signIn,signUp,google,reset,demo}){
   const [form,setForm]=useState({name:'',email:'',password:'',confirm:''}),update=(key,value)=>setForm(v=>({...v,[key]:value}))
   const submit=e=>{e.preventDefault();if(screen==='signup'){if(form.password!==form.confirm)return;signUp(form)}else if(screen==='reset')reset(form.email);else signIn(form)}
-  return <div className="product-shell"><header className="landing-nav"><div className="landing-brand"><UniverseLogo className="header-logo"/><strong>Universe Mapper</strong></div><nav><button onClick={()=>setScreen('landing')}>Overview</button><button onClick={()=>setScreen('signin')}>Sign In</button><button className="nav-primary" onClick={()=>setScreen('signup')}>Get Started</button></nav></header><main className="landing-main"><section className="hero-copy"><div className="eyebrow">VISUAL KNOWLEDGE & SYSTEM MODELING</div><p className="product-tagline">Map the logic. Shape the story. Present the universe.</p><h1>Understand every connection in your Universe.</h1><p>Organize structures, trace relationships, build formulas, model decisions, and explore scenarios in one connected workspace.</p><div className="capability-grid"><article><i>01</i><strong>Structure</strong><span>Map information from Universe to its deepest child.</span></article><article><i>02</i><strong>Relationships</strong><span>Connect causes, dependencies, and influences.</span></article><article><i>03</i><strong>Formula & Decision</strong><span>Build calculations and decision paths visually.</span></article><article><i>04</i><strong>Views & Trace</strong><span>Focus on the context relevant to your analysis.</span></article></div><button className="demo-button" onClick={demo}>Explore Offline Demo</button></section><section className="auth-card"><div className="auth-visual"><UniverseLogo className="hero-logo"/></div>{screen==='landing'?<><h2>Start mapping your Universe</h2><p>Create a private workspace, then invite people when you are ready to collaborate.</p><button className="auth-primary" onClick={()=>setScreen('signup')}>Create free account</button><button className="auth-secondary" onClick={()=>setScreen('signin')}>I already have an account</button></>:<form onSubmit={submit}><button type="button" className="back-link" onClick={()=>setScreen('landing')}>← Back</button><h2>{screen==='signup'?'Create your account':screen==='reset'?'Reset password':'Welcome back'}</h2>{screen==='signup'&&<label>Full name<input required value={form.name} onChange={e=>update('name',e.target.value)} placeholder="Your name"/></label>}<label>Email<input required type="email" value={form.email} onChange={e=>update('email',e.target.value)} placeholder="name@example.com"/></label>{screen!=='reset'&&<label>Password<input required type="password" value={form.password} onChange={e=>update('password',e.target.value)} placeholder="Minimum 6 characters" minLength="6"/></label>}{screen==='signup'&&<label>Confirm password<input required type="password" value={form.confirm} onChange={e=>update('confirm',e.target.value)}/>{form.confirm&&form.password!==form.confirm&&<small>Passwords do not match.</small>}</label>}{message&&<div className="auth-message">{message}</div>}<button className="auth-primary" disabled={busy||Boolean(screen==='signup'&&form.password!==form.confirm)}>{busy?'Please wait…':screen==='signup'?'Create Account':screen==='reset'?'Send Reset Link':'Sign In'}</button>{screen!=='reset'&&<><div className="auth-divider"><span>or</span></div><button type="button" className="google-button" disabled={busy} onClick={google}><b>G</b> Continue with Google</button></>}<div className="auth-switch">{screen==='signin'?<><button type="button" onClick={()=>setScreen('reset')}>Forgot password?</button><span>New here? <button type="button" onClick={()=>setScreen('signup')}>Create account</button></span></>:screen==='signup'?<span>Already registered? <button type="button" onClick={()=>setScreen('signin')}>Sign in</button></span>:<button type="button" onClick={()=>setScreen('signin')}>Return to sign in</button>}</div></form>}</section></main></div>
+  return <div className="product-shell"><header className="landing-nav"><div className="landing-brand"><UniverseLogo className="header-logo"/><strong>Universe Mapper</strong></div><nav><button onClick={()=>setScreen('landing')}>Overview</button><button onClick={()=>setScreen('signin')}>Sign In</button><button className="nav-primary" onClick={()=>setScreen('signup')}>Get Started</button></nav></header><main className="landing-main"><section className="hero-copy"><div className="eyebrow">VISUAL KNOWLEDGE & SYSTEM MODELING</div><p className="product-tagline">Map the logic. Shape the story. Present the universe.</p><h1>Understand every connection in your Universe.</h1><p>Organize structures, trace relationships, build formulas, model decisions, and explore scenarios in one connected workspace.</p><div className="capability-grid"><article><i>01</i><strong>Structure</strong><span>Map information from Universe to its deepest child.</span></article><article><i>02</i><strong>Relationships</strong><span>Connect causes, dependencies, and influences.</span></article><article><i>03</i><strong>Formula & Decision</strong><span>Build calculations and decision paths visually.</span></article><article><i>04</i><strong>Views & Trace</strong><span>Focus on the context relevant to your analysis.</span></article></div><button className="demo-button" onClick={demo}>Explore Demo</button></section><section className="auth-card"><div className="auth-visual"><UniverseLogo className="hero-logo"/></div>{screen==='landing'?<><h2>Start mapping your Universe</h2><p>Create a private workspace, then invite people when you are ready to collaborate.</p><button className="auth-primary" onClick={()=>setScreen('signup')}>Create free account</button><button className="auth-secondary" onClick={()=>setScreen('signin')}>I already have an account</button></>:<form onSubmit={submit}><button type="button" className="back-link" onClick={()=>setScreen('landing')}>← Back</button><h2>{screen==='signup'?'Create your account':screen==='reset'?'Reset password':'Welcome back'}</h2>{screen==='signup'&&<label>Full name<input required value={form.name} onChange={e=>update('name',e.target.value)} placeholder="Your name"/></label>}<label>Email<input required type="email" value={form.email} onChange={e=>update('email',e.target.value)} placeholder="name@example.com"/></label>{screen!=='reset'&&<label>Password<input required type="password" value={form.password} onChange={e=>update('password',e.target.value)} placeholder="Minimum 6 characters" minLength="6"/></label>}{screen==='signup'&&<label>Confirm password<input required type="password" value={form.confirm} onChange={e=>update('confirm',e.target.value)}/>{form.confirm&&form.password!==form.confirm&&<small>Passwords do not match.</small>}</label>}{message&&<div className="auth-message">{message}</div>}<button className="auth-primary" disabled={busy||Boolean(screen==='signup'&&form.password!==form.confirm)}>{busy?'Please wait…':screen==='signup'?'Create Account':screen==='reset'?'Send Reset Link':'Sign In'}</button>{screen!=='reset'&&<><div className="auth-divider"><span>or</span></div><button type="button" className="google-button" disabled={busy} onClick={google}><b>G</b> Continue with Google</button></>}<div className="auth-switch">{screen==='signin'?<><button type="button" onClick={()=>setScreen('reset')}>Forgot password?</button><span>New here? <button type="button" onClick={()=>setScreen('signup')}>Create account</button></span></>:screen==='signup'?<span>Already registered? <button type="button" onClick={()=>setScreen('signin')}>Sign in</button></span>:<button type="button" onClick={()=>setScreen('signin')}>Return to sign in</button>}</div></form>}</section></main></div>
 }
 
 function Verification({user,message,busy,onResend,onRefresh,onLogout}){return <div className="center-page"><div className="status-card"><div className="mail-icon">✉</div><h1>Verify your email</h1><p>We sent a verification link to <strong>{user?.email}</strong>. Verify your address before creating, editing, or joining a shared Universe.</p>{message&&<div className="auth-message">{message}</div>}<button className="auth-primary" disabled={busy} onClick={onRefresh}>I have verified my email</button><button className="auth-secondary" disabled={busy} onClick={onResend}>Resend verification email</button><button className="text-button" onClick={onLogout}>Sign out</button></div></div>}

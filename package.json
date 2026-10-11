@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:offline": "npm run build && node scripts/build-standalone.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "check": "eslint ."
+    "check": "eslint .",
+    "test": "node --test tests/foundation.test.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
