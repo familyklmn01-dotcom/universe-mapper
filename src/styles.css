@@ -606,3 +606,107 @@
 .solar-system-mode .solar-sphere-node.depth-0 .solar-sphere { filter: drop-shadow(0 0 13px rgba(255,190,80,.35)); }
 .solar-system-mode .solar-sphere-node { cursor: grab; touch-action: none; }
 .solar-system-mode .solar-sphere-node:active { cursor: grabbing; }
+
+/* Final targeted correction: compact Print Studio controls; never stretch fields to fill spare space. */
+.workspace-toolbar.is-printout-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  overflow: visible;
+  min-width: 0;
+}
+.workspace-toolbar.is-printout-toolbar > .view-control {
+  width: auto;
+  min-width: 0;
+  justify-content: flex-start;
+  align-self: flex-start;
+  gap: 10px;
+}
+.workspace-toolbar.is-printout-toolbar .print-studio-exit {
+  margin-left: 0;
+  flex: 0 0 auto;
+}
+.workspace-toolbar.is-printout-toolbar > .printout-toolbar {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  overflow: visible;
+}
+.workspace-toolbar.is-printout-toolbar .printout-view-tabs,
+.workspace-toolbar.is-printout-toolbar .printout-zoom-controls,
+.workspace-toolbar.is-printout-toolbar .printout-copy-actions,
+.workspace-toolbar.is-printout-toolbar .printout-toolbar > .print-action {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.workspace-toolbar.is-printout-toolbar .printout-select {
+  display: flex;
+  flex: 0 0 152px;
+  flex-direction: column;
+  gap: 3px;
+  width: 152px;
+  min-width: 0;
+  max-width: 152px;
+}
+.workspace-toolbar.is-printout-toolbar .printout-select select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.workspace-toolbar.is-printout-toolbar .printout-page-setup {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px 9px;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 8px;
+}
+.workspace-toolbar.is-printout-toolbar .printout-page-setup-title {
+  flex: 0 0 auto;
+  margin-right: 2px;
+}
+.workspace-toolbar.is-printout-toolbar .printout-page-setup .printout-select {
+  flex: 0 0 132px;
+  width: 132px;
+  max-width: 132px;
+}
+.workspace-toolbar.is-printout-toolbar .printout-page-setup .printout-select.paper { flex-basis: 94px; width: 94px; max-width: 94px; }
+.workspace-toolbar.is-printout-toolbar .printout-page-setup .printout-select.orientation { flex-basis: 124px; width: 124px; max-width: 124px; }
+.workspace-toolbar.is-printout-toolbar .printout-toolbar > .print-action {
+  min-width: 76px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 14px;
+  white-space: nowrap;
+  align-self: center;
+}
+.workspace-toolbar.is-printout-toolbar .printout-copy-actions button { white-space: nowrap; }
+.workspace-toolbar.is-printout-toolbar .printout-document-actions { display: none; }
+.printout-structure-tools { gap: 0; }
+.solar-orbit-width-control input[type="range"] { width: 100%; min-width: 0; accent-color: #29c7bd; }
+.solar-orbit-width-control > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.solar-orbit-width-control > span strong { font-size: 11px; font-weight: 700; color: var(--text-muted, #8794a8); }
+.solar-orbit-width-control small { display: block; margin-top: 4px; line-height: 1.45; color: var(--text-muted, #8794a8); }
+/* Solar spheres use their visible circular perimeter for connector handles. */
+.solar-system-mode .connector-handle { r: 4.5px; }
+.solar-system-mode .resize-handle { display: none; }
+@media (max-width: 900px) {
+  .workspace-toolbar.is-printout-toolbar .printout-select { flex-basis: 142px; width: 142px; max-width: 142px; }
+  .workspace-toolbar.is-printout-toolbar .printout-page-setup { width: auto; }
+}
