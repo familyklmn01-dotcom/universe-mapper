@@ -765,3 +765,19 @@
 .printout-view .printout-map-stage { flex: 0 0 auto; width: 1200px; min-width: 1200px; height: 760px; min-height: 760px; aspect-ratio: auto; overflow: hidden; }
 .printout-view .printout-map-lines { width: 1200px; height: 760px; }
 .printout-view .printout-map-node { flex: 0 0 auto; }
+
+
+/* Solar System 2.5D depth cues: quieter far tracks, stronger near tracks and compact satellites. */
+.solar-orbit-ring { stroke-width: 1.1; }
+.solar-orbit-ring.depth-1 { stroke-opacity: .16; }
+.solar-orbit-ring.depth-2 { stroke-opacity: .24; }
+.solar-orbit-ring.depth-3 { stroke-opacity: .32; }
+.solar-orbit-ring.depth-4,
+.solar-orbit-ring.depth-5,
+.solar-orbit-ring.depth-6 { stroke-opacity: .38; }
+.solar-system-mode .solar-sphere-node .solar-sphere { filter: drop-shadow(0 4px 5px rgba(0,0,0,.34)); }
+.solar-system-mode .solar-sphere-node.depth-0 .solar-sphere { filter: drop-shadow(0 0 14px rgba(255,190,80,.34)); }
+.solar-system-mode .solar-sphere-node.depth-2 .solar-sphere,
+.solar-system-mode .solar-sphere-node.depth-3 .solar-sphere,
+.solar-system-mode .solar-sphere-node.depth-4 .solar-sphere,
+.solar-system-mode .solar-sphere-node.depth-5 .solar-sphere { filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
