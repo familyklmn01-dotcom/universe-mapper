@@ -7,6 +7,7 @@ import { createMapperFile, readMapperFile } from './lib/projectFormat.js'
 import { pathThrough, snap as snapValue } from './lib/canvasGeometry.js'
 import { removeNearWhiteBackground } from './lib/imageProcessing.js'
 
+
 const ICONS = {
   plus: <path d="M12 5v14M5 12h14"/>, search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
   undo: <path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/>, redo: <path d="m15 7 5 5-5 5m4-5h-8a6 6 0 0 0-6 6"/>,
