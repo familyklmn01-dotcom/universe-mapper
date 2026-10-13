@@ -759,3 +759,9 @@
     box-sizing: border-box !important;
   }
 }
+
+/* Page Setup behavior: paper dimensions change independently from map geometry. The map stage and its nodes retain fixed canvas units; smaller paper clips overflow instead of silently scaling/stretching objects. */
+.printout-view .printout-map-paper { overflow: hidden; }
+.printout-view .printout-map-stage { flex: 0 0 auto; width: 1200px; min-width: 1200px; height: 760px; min-height: 760px; aspect-ratio: auto; overflow: hidden; }
+.printout-view .printout-map-lines { width: 1200px; height: 760px; }
+.printout-view .printout-map-node { flex: 0 0 auto; }
