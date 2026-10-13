@@ -257,7 +257,7 @@
   .printout-view{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
   .printout-scroll{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
   .printout-scaled{width:auto!important;min-width:0!important;zoom:1!important}
-  .printout-paper-hierarchy,.printout-document,.printout-document .printout-page{width:100%!important;min-height:0!important;margin:0!important;padding:8mm!important;box-shadow:none!important;border:0!important}
+  .printout-paper-hierarchy,.printout-document,.printout-document .printout-page{width:100%!important;min-height:0!important;margin:0!important;padding:var(--page-margin,10mm)!important;box-shadow:none!important;border:0!important}
   .printout-split-hierarchy{display:block!important}
   .printout-split-hierarchy>.printout-paper-hierarchy{break-after:page;page-break-after:always}
   .printout-structure{break-inside:auto!important;page-break-inside:auto!important;box-shadow:none!important;border:0!important}
@@ -282,7 +282,7 @@
 .printout-map-node.drop-target{border-color:#395ec7;background:#e9efff;box-shadow:0 0 0 3px #6d8de555}
 @media(max-width:1250px){.printout-split-live{grid-template-columns:minmax(0,1fr) minmax(360px,46%)}.printout-map-paper{min-width:760px}}
 @media(max-width:900px){.printout-split-live{grid-template-columns:1fr;grid-template-rows:48% 52%}.printout-split-canvas{border-right:0;border-bottom:1px solid #cbd3df}.printout-map-paper{min-width:0;width:100%;min-height:0}}
-@media print{.printout-split-live{display:block!important;height:auto!important;overflow:visible!important}.printout-split-canvas{display:none!important}.printout-map-paper{width:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:8mm!important;border:0!important;box-shadow:none!important}.printout-map-stage{border:0!important;background-image:none!important}.printout-map-node{box-shadow:none!important}}
+@media print{.printout-split-live{display:block!important;height:auto!important;overflow:visible!important}.printout-split-canvas{display:none!important}.printout-map-paper{width:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:var(--page-margin,10mm)!important;border:0!important;box-shadow:none!important}.printout-map-stage{border:0!important;background-image:none!important}.printout-map-node{box-shadow:none!important}}
 
 
 /* P01-P10 follow-up: navigation / structure actions / print composition */
@@ -718,4 +718,44 @@
 @media (max-width: 900px) {
   .workspace-toolbar.is-printout-toolbar .printout-select { flex-basis: 142px; width: 142px; max-width: 142px; }
   .workspace-toolbar.is-printout-toolbar .printout-page-setup { width: auto; }
+}
+
+/* Page Setup: use physical paper dimensions in the preview; never fit content by changing its font size. */
+.printout-view .printout-document .printout-page {
+  box-sizing: border-box;
+  width: var(--paper-width, 297mm);
+  min-width: var(--paper-width, 297mm);
+  min-height: var(--paper-height, 210mm);
+  aspect-ratio: auto;
+  padding: var(--page-margin, 10mm);
+  flex: 0 0 auto;
+}
+.printout-view .printout-map-paper {
+  box-sizing: border-box;
+  width: var(--paper-width, 297mm);
+  min-width: var(--paper-width, 297mm);
+  height: var(--paper-height, 210mm);
+  min-height: 0;
+  aspect-ratio: auto;
+  padding: var(--page-margin, 10mm);
+  overflow: hidden;
+}
+.printout-view .printout-map-title { margin: 0 0 14px; }
+.printout-view .printout-map-stage { flex: 1 1 auto; min-height: 0; aspect-ratio: auto; }
+@media print {
+  .printout-view .printout-document .printout-page {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: var(--paper-height, 210mm) !important;
+    padding: var(--page-margin, 10mm) !important;
+    box-sizing: border-box !important;
+  }
+  .printout-view .printout-map-paper {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--paper-height, 210mm) !important;
+    min-height: 0 !important;
+    padding: var(--page-margin, 10mm) !important;
+    box-sizing: border-box !important;
+  }
 }
