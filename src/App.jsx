@@ -67,7 +67,7 @@ function aiPrompt(data) {
   return lines.join('\n')
 }
 const nodeDepth=(data,node)=>{let d=0,current=node,seen=new Set([node.id]);while(current?.parentId&&!seen.has(current.parentId)){seen.add(current.parentId);current=data.nodes.find(n=>n.id===current.parentId);if(current)d++}return d}
-const solarSphereRadius=(data,node)=>{const depth=nodeDepth(data,node),stored=Number(node.solarRadius);if(depth===0)return Math.max(1,Math.min(100,Number.isFinite(stored)&&stored>0?stored:52));if(depth===1)return Math.max(1,Math.min(48,Number.isFinite(stored)&&stored>0?stored:15));return Math.max(1,Math.min(24,Number.isFinite(stored)&&stored>0?stored:6))}
+const solarSphereRadius=(data,node)=>{const depth=nodeDepth(data,node),stored=Number(node.solarRadius);if(depth===0)return Math.max(2,Math.min(100,stored||52));if(depth===1)return Math.max(2,Math.min(48,stored||15));return Math.max(1,Math.min(24,stored||6))}
 const scopeNodeIds=(data,scope,structureFilter,selectedIds)=>{if(scope==='selected')return new Set(selectedIds);if(scope==='structure'&&structureFilter!=='all')return new Set(data.nodes.filter(n=>n.structureId===structureFilter).map(n=>n.id));if(scope==='root'&&selectedIds[0])return descendants(data,selectedIds[0]);return new Set(data.nodes.map(n=>n.id))}
 function calculateLayout(data,{preset='tree',direction='tb',scope='universe',structureFilter='all',selectedIds=[]}){
   const selectedPreset=layoutPresetById(normalizeLayoutPreset(preset)),engine=selectedPreset.engine==='manual'?'manual':selectedPreset.engine;
