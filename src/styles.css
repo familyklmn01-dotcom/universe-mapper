@@ -781,3 +781,27 @@
 .solar-system-mode .solar-sphere-node.depth-3 .solar-sphere,
 .solar-system-mode .solar-sphere-node.depth-4 .solar-sphere,
 .solar-system-mode .solar-sphere-node.depth-5 .solar-sphere { filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+/* Solar System controls: one native slider per setting; keep drag interaction reliable. */
+.inspector .solar-sphere-control input[type="range"],
+.inspector .solar-orbit-width-control input[type="range"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  accent-color: #29c7bd;
+  cursor: ew-resize;
+  touch-action: pan-x;
+}
+.inspector .solar-sphere-control input[type="range"]:focus,
+.inspector .solar-orbit-width-control input[type="range"]:focus {
+  outline: 2px solid #29c7bd;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
