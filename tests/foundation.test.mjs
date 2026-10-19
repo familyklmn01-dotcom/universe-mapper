@@ -80,3 +80,15 @@ test('root scope is passed explicitly into GraphCanvas', async () => {
   assert.match(source, /rootScopeId=\{rootScopeId\}/)
   assert.match(source, /function GraphCanvas\(\{ palettePos, paletteDragRef, rootScopeId,/)
 })
+
+test('Universe AI prototype stays isolated from existing canvas layout and labels the missing provider', async () => {
+  const fs = await import('node:fs/promises')
+  const app = await fs.readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const panel = await fs.readFile(new URL('../src/components/UniverseAIPanel.jsx', import.meta.url), 'utf8')
+  const styles = await fs.readFile(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.match(app, /<UniverseAIPanel/)
+  assert.match(app, /next\.structures=\[\.\.\.\(next\.structures\|\|\[\]\),\{id:structureId,name:structureName/)
+  assert.match(panel, /AI provider belum terhubung/)
+  assert.match(panel, /readOnly/)
+  assert.match(styles, /Universe AI prototype panel: overlays the canvas without changing the grid/)
+})

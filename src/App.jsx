@@ -6,6 +6,7 @@ import { templateCatalog } from './data/templates.js'
 import { createMapperFile, readMapperFile } from './lib/projectFormat.js'
 import { pathThrough, snap as snapValue } from './lib/canvasGeometry.js'
 import { removeNearWhiteBackground } from './lib/imageProcessing.js'
+import UniverseAIPanel from './components/UniverseAIPanel.jsx'
 
 const ICONS = {
   plus: <path d="M12 5v14M5 12h14"/>, search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
@@ -164,6 +165,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
   const [dialog, setDialog] = useState(null)
   const [deleteConfirm,setDeleteConfirm]=useState(null)
   const [analysis,setAnalysis]=useState(null)
+  const [aiPanelOpen,setAiPanelOpen]=useState(false)
   const [presentationOpen,setPresentationOpen]=useState(false)
   const [notice,setNotice]=useState(null)
   const [showValidation,setShowValidation]=useState(false)
@@ -261,6 +263,24 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
   const insertAnnotation=kind=>commit(next=>{next.annotations=next.annotations||[];const maxZ=Math.max(0,...next.nodes.map(n=>Number(n.zIndex)||0),...next.annotations.map(a=>Number(a.zIndex)||0));next.annotations.push({id:createId('annotation'),kind,shape:kind==='text'?'rectangle':kind,text:'',x:360+next.annotations.length*18,y:220+next.annotations.length*18,width:kind==='text'?220:180,height:kind==='text'?70:100,rotation:0,fontFamily:'Inter',fontSize:18,fontWeight:'600',italic:false,underline:false,align:'left',verticalAlign:'top',color:kind==='text'?'auto':'#edf2ff',fill:kind==='text'?'auto':'#263654',fillOpacity:1,stroke:'#7897f5',strokeWidth:kind==='text'?0:2,strokeStyle:'solid',cornerRadius:kind==='frame'?0:10,locked:false,visibility:'all',sceneId:null,zIndex:maxZ+1});return next})
   const insertImage=(event,removeBackground=false)=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/')){setNotice({type:'error',text:'Pilih file gambar yang valid.'});return}const reader=new FileReader();reader.onload=async()=>{try{const source=removeBackground?await removeNearWhiteBackground(reader.result):reader.result,assetId=createId('asset');commit(next=>{next.assets=[...(next.assets||[]),{id:assetId,name:file.name,mimeType:removeBackground?'image/png':file.type,size:file.size,dataUrl:source,createdAt:new Date().toISOString(),metadata:{storage:'embedded',backgroundRemoved:removeBackground}}];const maxZ=Math.max(0,...next.nodes.map(n=>Number(n.zIndex)||0),...(next.annotations||[]).map(a=>Number(a.zIndex)||0));next.annotations=[...(next.annotations||[]),{id:createId('annotation'),kind:'image',shape:'rectangle',assetId,src:source,text:file.name,x:360,y:220,width:320,height:220,rotation:0,zIndex:maxZ+1,maintainAspectRatio:true,locked:false,visibility:'all',sceneId:null,metadata:{iconTreatment:removeBackground}}];return next});setNotice({type:'success',text:`${file.name} ditambahkan${removeBackground?' dengan latar putih transparan':''} dan akan tersimpan di file .mf.`})}catch(error){setNotice({type:'error',text:error.message})}finally{event.target.value=''}};reader.readAsDataURL(file)}
 
+  const applyAIPrototype = draft => {
+    const structureId=createId('structure'), rootId=createId('node')
+    const structureName=`AI Draft — ${String(draft.root||'New Structure').slice(0,48)}`
+    const nodeRecords=[]
+    const maxZ=Math.max(0,...data.nodes.map(node=>Number(node.zIndex)||0),...(data.annotations||[]).map(item=>Number(item.zIndex)||0))
+    const root={id:rootId,structureId,parentId:null,name:draft.root||'New Topic',type:'category',value:'',description:'Prototype structure. AI provider is not connected yet.',status:'draft',zIndex:maxZ+1,x:520,y:90,width:220,height:72,locked:false,fields:[],textAlign:'center',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}}
+    nodeRecords.push(root)
+    const children=draft.children||[]
+    children.forEach((child,index)=>{
+      const id=createId('node'), childWidth=190, x=260+index*230
+      nodeRecords.push({id,structureId,parentId:rootId,name:child.name,type:'process',value:'',description:'Prototype-generated placeholder.',status:'draft',zIndex:maxZ+2+index,x,y:250,width:childWidth,height:64,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}})
+      ;(child.children||[]).forEach((grandchild,grandIndex)=>nodeRecords.push({id:createId('node'),structureId,parentId:id,name:grandchild,type:'process',value:'',description:'Prototype-generated placeholder.',status:'draft',zIndex:maxZ+20+index*4+grandIndex,x:x+grandIndex*210,y:370,width:190,height:60,locked:false,fields:[],textAlign:'left',verticalAlign:'middle',autoFit:true,link:{type:'none',url:'',viewId:''}}))
+    })
+    commit(next=>{next.structures=[...(next.structures||[]),{id:structureId,name:structureName,description:'Created with the Universe AI prototype panel.'}];next.nodes.push(...nodeRecords);return next})
+    setStructureFilter(structureId);setSelectedIds([rootId]);setSelectedId(rootId);setSelectedObject({type:'node',id:rootId});setPropertyTarget({type:'node',id:rootId});setRightCollapsed(false);setView('graph');setAiPanelOpen(false)
+    setNotice({type:'info',text:'Contoh struktur ditambahkan. Ini belum menggunakan AI sungguhan; layanan AI akan diintegrasikan pada tahap berikutnya.'})
+  }
+
   const columns=`${leftCollapsed?44:leftWidth}px ${leftCollapsed?0:6}px minmax(0,1fr)`
 
   return <div className={`app-shell ${readOnly?'read-only':''}`}>
@@ -275,6 +295,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
         <ToolbarMenu label="Help"><button onClick={()=>setNotice({type:'info',text:'Click selects / Properties · drag moves · double-click edits · Shift+click multi-select · Ctrl/Cmd+click follows a hyperlink · right-click opens actions.'})}>Canvas Controls</button></ToolbarMenu>
       </nav>
       <div className="top-actions">
+        <button className={`button universe-ai-launch ${aiPanelOpen?'active':''}`} onClick={()=>setAiPanelOpen(value=>!value)} aria-expanded={aiPanelOpen}>✦ Universe AI</button>
         {syncStatus&&<span className={`sync-status ${syncStatus.toLowerCase().replaceAll(' ','-')}`}>{syncStatus}</span>}
         {readOnly&&<span className="viewer-badge">VIEWER · READ ONLY</span>}
         {onExit&&<button className="user-chip" onClick={onExit} title="Back to account"><span>{(user?.displayName||user?.email||'U').slice(0,1).toUpperCase()}</span></button>}
@@ -287,6 +308,7 @@ export function EditorApp({ user=null, onExit=null, projectId=null, initialData=
       <Workspace data={data} commit={commit} undo={undo} redo={redo} canUndo={history.length>0} canRedo={future.length>0} selectedId={selectedId} selectedIds={selectedIds} setSelectedId={setSelectedId} setSelectedIds={setSelectedIds} onSelectObject={handleSelectObject} onOpenProperties={handleOpenProperties} onEdit={id=>setDialog({type:'node',editId:id})} onCreate={options=>setDialog({type:'node',root:true,...options})} onInsertAnnotation={insertAnnotation} onInsertImage={insertImage} view={view} setView={setView} structureFilter={structureFilter} notify={setNotice} presentationOpen={presentationOpen} closePresentation={()=>setPresentationOpen(false)} onCreateMainStructure={createMainStructure} onSetStructureFilter={setStructureFilter} onSetDeleteConfirm={setDeleteConfirm} onToggleInspector={()=>setRightCollapsed(v=>!v)} inspectorCollapsed={rightCollapsed}/>
     </div>
     {rightCollapsed?<div className="inspector-overlay inspector-overlay-collapsed"><PanelRail side="right" onOpen={()=>setRightCollapsed(false)}/></div>:<div className="inspector-overlay" style={{width:`${rightWidth}px`}}><div className="inspector-resize-handle" onPointerDown={event=>startResize('right',event)} aria-label="Resize Inspector"/><Inspector data={data} selected={selected} selectedObject={propertyTarget} selectedCount={selectedIds.length} commit={commit} onCollapse={()=>setRightCollapsed(true)} onEdit={() => selected && setDialog({ type: 'node', editId: selected.id })} onChild={() => selected && setDialog({ type: 'node', parentId: selected.id })} onFormula={()=>selected&&setAnalysis({mode:'formula',targetId:selected.id})} onDelete={deleteSelected} onToggleLock={()=>commit(next=>{next.nodes.filter(n=>selectedIds.includes(n.id)).forEach(n=>{n.locked=!n.locked});return next})}/></div>}
+    {aiPanelOpen&&<UniverseAIPanel onClose={()=>setAiPanelOpen(false)} onApply={applyAIPrototype} readOnly={readOnly} rightOffset={rightCollapsed?52:rightWidth+8}/>}
     {dialog && <Dialog dialog={dialog} data={data} close={() => setDialog(null)} commit={commit} select={selectOne}/>} 
     {analysis&&<EnhancedAnalysisCenter mode={typeof analysis==='string'?analysis:analysis.mode} initialTarget={typeof analysis==='object'?analysis.targetId:null} setMode={mode=>setAnalysis(current=>typeof current==='object'?{...current,mode}:mode)} data={data} commit={commit} close={()=>setAnalysis(null)}/>} 
     {notice&&<div className={`toast ${notice.type||''}`} role="status">{notice.text}<button onClick={()=>setNotice(null)}>×</button></div>}
