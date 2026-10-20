@@ -1,0 +1,12 @@
+{
+  "name": "universe-mapper-ai-entitlement-admin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ai-entitlement.test.mjs",
+    "set-tier": "node set-ai-tier.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
+  }
+}
