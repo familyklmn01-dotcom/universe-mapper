@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { generateFreeAIStructure } from '../lib/aiClient.js'
+import { generateAIStructure } from '../lib/aiClient.js'
 
 const QUICK_PROMPTS = [
   { label: 'Mind map bisnis', mode: 'mindmap', prompt: 'Buat mind map untuk membangun bisnis online, dari riset pasar sampai penjualan dan evaluasi.' },
@@ -20,16 +20,20 @@ export default function UniverseAIPanel({ onClose, onApply, readOnly, user, righ
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [activeTier, setActiveTier] = useState('AI')
 
   const generatePreview = async () => {
     if (!prompt.trim()) { setNotice('Tulis topik terlebih dahulu.'); setPreview(null); return }
-    setBusy(true); setNotice('Menghubungi Free AI…'); setPreview(null)
+    setBusy(true); setNotice('Memeriksa akses dan menghubungi AI…'); setPreview(null)
     try {
-      const structure = await generateFreeAIStructure({ prompt, mode, user })
+      const tokenResult = user && !user.demo && user.getIdTokenResult ? await user.getIdTokenResult() : null
+      const tier = tokenResult?.claims?.aiTier === 'paid' ? 'Paid AI' : 'Free AI'
+      const structure = await generateAIStructure({ prompt, mode, user })
+      setActiveTier(tier)
       setPreview(structure)
-      setNotice(`Pratinjau siap · ${structure.nodeCount} node · Free AI`)
+      setNotice(`Pratinjau siap · ${structure.nodeCount} node · ${tier}`)
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Free AI tidak dapat memproses permintaan.')
+      setNotice(error instanceof Error ? error.message : 'AI tidak dapat memproses permintaan.')
     } finally { setBusy(false) }
   }
 
@@ -55,7 +59,7 @@ export default function UniverseAIPanel({ onClose, onApply, readOnly, user, righ
         <button className="circle-button" onClick={onClose} aria-label="Close Universe AI">×</button>
       </header>
       <div className="universe-ai-body">
-        <div className="universe-ai-intro"><span className="universe-ai-eyebrow">AI WORKSPACE</span><strong>Ubah ide menjadi struktur</strong><p>Tulis tujuanmu. Free AI akan menyusun cabang dan subtopik yang bisa kamu tinjau sebelum dibuat sebagai node yang dapat diedit.</p><div className="universe-ai-capability"><span>✦</span> Free AI <i /> Mind Map <i /> Hierarchy</div></div>
+        <div className="universe-ai-intro"><span className="universe-ai-eyebrow">AI WORKSPACE</span><strong>Ubah ide menjadi struktur</strong><p>Tulis tujuanmu. AI akan menyusun cabang dan subtopik yang bisa kamu tinjau sebelum dibuat sebagai node yang dapat diedit.</p><div className="universe-ai-capability"><span>✦</span> Free / Paid AI <i /> Mind Map <i /> Hierarchy</div></div>
         <div className="universe-ai-quickstart"><div className="universe-ai-section-heading"><strong>Mulai dari contoh</strong><span>Opsional</span></div><div className="universe-ai-prompt-chips">{QUICK_PROMPTS.map(item => <button key={item.label} type="button" onClick={() => useQuickPrompt(item)} disabled={busy}>{item.label}</button>)}</div></div>
         <label className="universe-ai-field"><span>Jenis struktur</span><div className="universe-ai-mode-switch"><button type="button" className={mode === 'mindmap' ? 'active' : ''} onClick={() => { setMode('mindmap'); setPreview(null); setNotice('') }} disabled={busy}>Mind Map</button><button type="button" className={mode === 'hierarchy' ? 'active' : ''} onClick={() => { setMode('hierarchy'); setPreview(null); setNotice('') }} disabled={busy}>Hierarchy</button></div><small className="universe-ai-mode-hint">{mode === 'mindmap' ? 'Eksplorasi ide dari satu topik utama ke cabang-cabang terkait.' : 'Susun peran atau tahapan dalam urutan induk dan turunan.'}</small></label>
         <label className="universe-ai-field"><span>Instruksi kamu</span><textarea rows={4} maxLength={5000} value={prompt} onChange={event => { setPrompt(event.target.value); setPreview(null); setNotice('') }} placeholder="Contoh: susun strategi peluncuran produk, dari riset hingga evaluasi…" disabled={busy} /><small className="universe-ai-char-count">{prompt.length.toLocaleString('id-ID')} / 5.000 karakter</small></label>
@@ -69,7 +73,7 @@ export default function UniverseAIPanel({ onClose, onApply, readOnly, user, righ
           <button className="button primary" type="button" onClick={applyPreview} disabled={readOnly}>Tambahkan ke canvas</button>
         </section>}
       </div>
-      <footer className="universe-ai-footer"><span><i className="universe-ai-footer-dot" /> Free AI · Pratinjau sebelum diterapkan</span><small>AI menghasilkan rancangan awal. Kamu tetap bisa mengedit node setelah ditambahkan. Ketersediaan bergantung pada konfigurasi layanan.</small></footer>
+      <footer className="universe-ai-footer"><span><i className="universe-ai-footer-dot" /> {activeTier} · Pratinjau sebelum diterapkan</span><small>AI menghasilkan rancangan awal. Kamu tetap bisa mengedit node setelah ditambahkan. Ketersediaan bergantung pada konfigurasi layanan.</small></footer>
     </aside>
   )
 }

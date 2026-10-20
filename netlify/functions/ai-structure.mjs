@@ -1,4 +1,5 @@
 import { validateAIStructure } from '../../src/lib/aiStructureSchema.js'
+import { verifyFirebaseIdToken } from './firebaseIdToken.mjs'
 
 const requestWindows = new Map()
 const RATE_WINDOW_MS = 60_000
@@ -10,17 +11,6 @@ const json = (statusCode, body) => ({
   body: JSON.stringify(body),
 })
 
-async function verifyFirebaseUser(idToken, apiKey) {
-  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }),
-  })
-  if (!response.ok) return null
-  const payload = await response.json().catch(() => ({}))
-  const user = payload?.users?.[0]
-  if (!user?.localId || user.emailVerified !== true || user.disabled === true) return null
-  return { uid: user.localId }
-}
-
 function parseModelJson(text) {
   const raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
   try { return JSON.parse(raw) } catch { throw new Error('Model AI mengembalikan format yang tidak valid. Coba instruksi yang lebih sederhana.') }
@@ -30,16 +20,17 @@ export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Metode tidak didukung.' })
 
   const apiKey = process.env.GEMINI_API_KEY
-  const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY
-  if (!apiKey || !firebaseApiKey) {
-    return json(503, { error: 'Free AI belum dikonfigurasi di server. Atur GEMINI_API_KEY dan FIREBASE_WEB_API_KEY di environment Netlify.' })
+  const projectId = process.env.FIREBASE_PROJECT_ID
+  if (!apiKey || !projectId) {
+    return json(503, { error: 'Free AI belum dikonfigurasi di server. Atur GEMINI_API_KEY dan FIREBASE_PROJECT_ID di environment Netlify.' })
   }
 
   const auth = String(event.headers?.authorization || event.headers?.Authorization || '')
   const tokenMatch = auth.match(/^Bearer\s+(.+)$/i)
   if (!tokenMatch) return json(401, { error: 'Silakan masuk dengan akun Universe Mapper terlebih dahulu.' })
-  const user = await verifyFirebaseUser(tokenMatch[1], firebaseApiKey).catch(() => null)
+  const user = await verifyFirebaseIdToken(tokenMatch[1], projectId).catch(() => null)
   if (!user) return json(401, { error: 'Sesi tidak valid atau email belum terverifikasi. Masuk kembali lalu coba lagi.' })
+  if (user.claims.aiTier === 'paid') return json(403, { error: 'Akun ini memiliki akses Paid AI. Gunakan jalur Paid AI.' })
 
   let body
   try { body = JSON.parse(event.body || '{}') } catch { return json(400, { error: 'Permintaan tidak berupa JSON yang valid.' }) }
