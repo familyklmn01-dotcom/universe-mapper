@@ -74,6 +74,14 @@ export async function handler(event) {
   }
   if (!response.ok) {
     const status = response.status
+    // Keep the browser response generic; record the provider's actual error in Netlify Function logs for diagnosis.
+    const providerError = await response.json().catch(() => ({}))
+    console.error('[Free AI] Gemini request failed', {
+      status,
+      model,
+      providerStatus: providerError?.error?.status || null,
+      providerMessage: providerError?.error?.message || response.statusText || 'No provider error message',
+    })
     return json(status === 429 ? 429 : 502, { error: status === 429 ? 'Kuota Free AI sedang habis. Coba lagi nanti.' : 'Penyedia Free AI gagal memproses permintaan.' })
   }
 
